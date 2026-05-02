@@ -10,8 +10,9 @@ export default defineManifest({
   },
   background: {
     service_worker: 'src/background.ts',
+    scripts: ['src/background.ts'],
     type: 'module',
-  },
+  } as any,
   content_scripts: [
     {
       matches: ['<all_urls>'],

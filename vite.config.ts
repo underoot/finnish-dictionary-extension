@@ -20,12 +20,23 @@ function backgroundScriptsManifest(): Plugin {
       }
       const json = JSON.parse(raw);
       let changed = false;
-      if (json.background?.service_worker) {
-        json.background = {
-          scripts: [json.background.service_worker],
-          type: json.background.type ?? 'module',
-        };
-        changed = true;
+      if (json.background) {
+        const sw = json.background.service_worker ?? json.background.scripts?.[0];
+        if (sw) {
+          const next = {
+            service_worker: sw,
+            scripts: [sw],
+            type: json.background.type ?? 'module',
+          };
+          if (
+            json.background.service_worker !== next.service_worker ||
+            JSON.stringify(json.background.scripts) !== JSON.stringify(next.scripts) ||
+            json.background.type !== next.type
+          ) {
+            json.background = next;
+            changed = true;
+          }
+        }
       }
       if (Array.isArray(json.web_accessible_resources)) {
         for (const r of json.web_accessible_resources) {
