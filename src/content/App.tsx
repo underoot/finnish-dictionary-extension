@@ -1,24 +1,37 @@
-import { useEffect, useRef, useState } from 'react';
-import WordPanel from './WordPanel';
-import BottomSheet from './BottomSheet';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import WordTooltip from './WordTooltip';
 import { sendMessage } from '../lib/messages';
 import { getDictionary, onDictionaryChanged } from '../lib/storage';
 import type { DictionaryMap, WordDefinitionList } from '../types';
 
-type Selection = {
+type TooltipState = {
   word: string;
   rect: DOMRect;
+  data: WordDefinitionList | null;
+  loading: boolean;
 };
 
 export default function App() {
   const [active, setActive] = useState(false);
   const [dict, setDict] = useState<DictionaryMap>({});
-  const [selection, setSelection] = useState<Selection | null>(null);
-  const [sheet, setSheet] = useState<WordDefinitionList | null>(null);
-  const [sheetLoading, setSheetLoading] = useState(false);
+  const [tooltip, setTooltip] = useState<TooltipState | null>(null);
   const decoratedRef = useRef(false);
   const cancelLemmasRef = useRef<Array<() => void>>([]);
   const captionsObserverRef = useRef<(() => void) | null>(null);
+  const tooltipWordRef = useRef<string | null>(null);
+  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const cmdHeldRef = useRef(false);
+
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => { if (e.key === 'Meta') cmdHeldRef.current = true; };
+    const onKeyUp = (e: KeyboardEvent) => { if (e.key === 'Meta') cmdHeldRef.current = false; };
+    window.addEventListener('keydown', onKeyDown);
+    window.addEventListener('keyup', onKeyUp);
+    return () => {
+      window.removeEventListener('keydown', onKeyDown);
+      window.removeEventListener('keyup', onKeyUp);
+    };
+  }, []);
 
   useEffect(() => {
     getDictionary().then(setDict);
@@ -34,15 +47,34 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    const onWordClick = (e: MouseEvent) => {
-      const span = e.currentTarget as HTMLElement;
-      e.preventDefault();
-      e.stopPropagation();
-      setSelection({ word: span.dataset.fiWord!, rect: span.getBoundingClientRect() });
+    const showTooltipFor = (word: string, rect: DOMRect) => {
+      if (closeTimerRef.current) { clearTimeout(closeTimerRef.current); closeTimerRef.current = null; }
+      tooltipWordRef.current = word;
+      setTooltip({ word, rect, data: null, loading: true });
+      sendMessage({ type: 'ANALYZE', word }).then((res) => {
+        if (tooltipWordRef.current !== word) return;
+        setTooltip((prev) => {
+          if (!prev || prev.word !== word) return prev;
+          return { ...prev, data: res.ok ? (res.data as WordDefinitionList) : null, loading: false };
+        });
+      });
     };
+
+    const onWordEnter = (e: MouseEvent) => {
+      if (cmdHeldRef.current) return;
+      const span = e.currentTarget as HTMLElement;
+      showTooltipFor(span.dataset.fiWord!, span.getBoundingClientRect());
+    };
+
+    const onWordLeave = () => {
+      if (cmdHeldRef.current) return;
+      tooltipWordRef.current = null;
+      closeTimerRef.current = setTimeout(() => setTooltip(null), 200);
+    };
+
     if (active) {
       if (!decoratedRef.current) {
-        decorate(onWordClick);
+        decorate(onWordEnter, onWordLeave);
         decoratedRef.current = true;
       }
       const baseSet = new Set(Object.keys(dict).map((b) => b.toLowerCase()));
@@ -51,7 +83,7 @@ export default function App() {
       cancelLemmasRef.current = [scheduleLemmatize(baseSet)];
 
       captionsObserverRef.current?.();
-      captionsObserverRef.current = watchCaptions(onWordClick, () => {
+      captionsObserverRef.current = watchCaptions(onWordEnter, onWordLeave, () => {
         applyKnownFromCache(baseSet);
         cancelLemmasRef.current.push(scheduleLemmatize(baseSet));
       });
@@ -62,55 +94,30 @@ export default function App() {
       captionsObserverRef.current = null;
       undecorate();
       decoratedRef.current = false;
-      setSelection(null);
-      setSheet(null);
+      setTooltip(null);
     }
   }, [active, dict]);
 
-  useEffect(() => {
-    if (!active) return;
-    const onOutside = (e: MouseEvent) => {
-      const path = e.composedPath() as Element[];
-      for (const el of path) {
-        if (el instanceof Element) {
-          if (el.id === '__fi-dict-host') return;
-          const data = (el as HTMLElement).dataset;
-          if (data && data.fiWord) return;
-        }
-      }
-      setSelection(null);
-    };
-    const onScroll = () => setSelection(null);
-    document.addEventListener('click', onOutside);
-    window.addEventListener('scroll', onScroll, { passive: true, capture: true });
-    return () => {
-      document.removeEventListener('click', onOutside);
-      window.removeEventListener('scroll', onScroll, { capture: true });
-    };
-  }, [active]);
+  const onTooltipEnter = useCallback(() => {
+    if (closeTimerRef.current) { clearTimeout(closeTimerRef.current); closeTimerRef.current = null; }
+  }, []);
 
-  const openDefinitions = async () => {
-    if (!selection) return;
-    setSheetLoading(true);
-    try {
-      const res = await sendMessage({ type: 'ANALYZE', word: selection.word });
-      if (res.ok) setSheet(res.data as WordDefinitionList);
-    } finally {
-      setSheetLoading(false);
-    }
-  };
+  const onTooltipLeave = useCallback(() => {
+    if (cmdHeldRef.current) return;
+    setTooltip(null);
+  }, []);
 
   return (
     <div className="fi-no-intercept">
-      {active && selection && (
-        <WordPanel rect={selection.rect} onDefinition={openDefinitions} />
-      )}
-      {(sheet || sheetLoading) && (
-        <BottomSheet
-          data={sheet}
-          loading={sheetLoading}
+      {active && tooltip && (
+        <WordTooltip
+          word={tooltip.word}
+          rect={tooltip.rect}
+          data={tooltip.data}
+          loading={tooltip.loading}
           dict={dict}
-          onClose={() => setSheet(null)}
+          onMouseEnter={onTooltipEnter}
+          onMouseLeave={onTooltipLeave}
         />
       )}
     </div>
@@ -125,16 +132,16 @@ const BATCH_SIZE = 40;
 const surfaceSpans = new Map<string, HTMLSpanElement[]>();
 const surfaceBaseforms = new Map<string, string[]>();
 
-function decorate(onWordClick: (e: MouseEvent) => void) {
+function decorate(onWordEnter: (e: MouseEvent) => void, onWordLeave: (e: MouseEvent) => void) {
   surfaceSpans.clear();
-  decorateRoot(document.body, onWordClick);
+  decorateRoot(document.body, onWordEnter, onWordLeave);
   injectStyles();
 }
 
-function decorateRoot(root: Node, onWordClick: (e: MouseEvent) => void) {
+function decorateRoot(root: Node, onWordEnter: (e: MouseEvent) => void, onWordLeave: (e: MouseEvent) => void) {
   if (root.nodeType !== Node.ELEMENT_NODE && root.nodeType !== Node.DOCUMENT_FRAGMENT_NODE) {
     if (root.nodeType === Node.TEXT_NODE) {
-      decorateTextNode(root as Text, onWordClick);
+      decorateTextNode(root as Text, onWordEnter, onWordLeave);
     }
     return;
   }
@@ -154,10 +161,10 @@ function decorateRoot(root: Node, onWordClick: (e: MouseEvent) => void) {
   const targets: Text[] = [];
   let n: Node | null;
   while ((n = walker.nextNode())) targets.push(n as Text);
-  for (const textNode of targets) decorateTextNode(textNode, onWordClick);
+  for (const textNode of targets) decorateTextNode(textNode, onWordEnter, onWordLeave);
 }
 
-function decorateTextNode(textNode: Text, onWordClick: (e: MouseEvent) => void) {
+function decorateTextNode(textNode: Text, onWordEnter: (e: MouseEvent) => void, onWordLeave: (e: MouseEvent) => void) {
   const parent = textNode.parentElement;
   if (!parent) return;
   if (parent.classList.contains(DECORATED_CLASS)) return;
@@ -179,7 +186,8 @@ function decorateTextNode(textNode: Text, onWordClick: (e: MouseEvent) => void) 
     span.dataset.fiWord = word;
     span.textContent = word;
     span.classList.add('fi-clickable', DECORATED_CLASS);
-    span.addEventListener('click', onWordClick);
+    span.addEventListener('mouseenter', onWordEnter);
+    span.addEventListener('mouseleave', onWordLeave);
     const key = word.toLowerCase();
     const list = surfaceSpans.get(key);
     if (list) list.push(span);
@@ -194,7 +202,11 @@ function decorateTextNode(textNode: Text, onWordClick: (e: MouseEvent) => void) 
 
 const CAPTIONS_SELECTOR = '[aria-label="Tekstitykset"]';
 
-function watchCaptions(onWordClick: (e: MouseEvent) => void, onNewWords: () => void): () => void {
+function watchCaptions(
+  onWordEnter: (e: MouseEvent) => void,
+  onWordLeave: (e: MouseEvent) => void,
+  onNewWords: () => void,
+): () => void {
   let innerObserver: MutationObserver | null = null;
   let watched: Element | null = null;
   let outer: MutationObserver | null = null;
@@ -210,7 +222,7 @@ function watchCaptions(onWordClick: (e: MouseEvent) => void, onNewWords: () => v
     innerObserver?.disconnect();
     for (const node of nodes) {
       if (!watched || !watched.contains(node)) continue;
-      decorateRoot(node, onWordClick);
+      decorateRoot(node, onWordEnter, onWordLeave);
     }
     observeInner();
     onNewWords();
@@ -220,7 +232,7 @@ function watchCaptions(onWordClick: (e: MouseEvent) => void, onNewWords: () => v
     if (watched === root) return;
     innerObserver?.disconnect();
     watched = root;
-    decorateRoot(root, onWordClick);
+    decorateRoot(root, onWordEnter, onWordLeave);
     onNewWords();
     innerObserver = new MutationObserver((mutations) => {
       const additions: Node[] = [];
