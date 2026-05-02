@@ -24,7 +24,7 @@ export type DictionaryMap = Record<string, DictionaryEntry>;
 
 export type Message =
   | { type: 'TOGGLE_ACTIVE'; tabId?: number }
-  | { type: 'GET_ACTIVE'; tabId: number }
+  | { type: 'GET_ACTIVE'; tabId?: number }
   | { type: 'ANALYZE'; word: string }
   | { type: 'BASEFORMS'; words: string[] }
   | { type: 'GET_DICTIONARY' }

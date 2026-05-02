@@ -42,6 +42,11 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    // Restore active state persisted in session storage across page reloads.
+    sendMessage({ type: 'GET_ACTIVE' }).then((res) => {
+      if (res.ok) setActive(!!res.data);
+    });
+
     const listener = (msg: any) => {
       if (msg?.type === 'TOGGLE_ACTIVE') setActive(!!msg.active);
     };
