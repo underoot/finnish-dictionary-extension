@@ -47,11 +47,38 @@ export function getDefinitionListAsync(word: string): Promise<WordDefinitionList
 
     const lookup = nlp<FwnPlugin>(a.BASEFORM).fwnDefinitions();
     const definitions = Object.values(lookup).flat();
-    if (definitions.length === 0) continue;
+    if (definitions.length > 0) {
+      meaning.definitions = definitions;
+      result.definitions.push(meaning);
+    }
 
-    meaning.definitions = definitions;
-    result.definitions.push(meaning);
+    for (const part of compoundParts(a.WORDBASES)) {
+      const partKey = `${part}:part`;
+      if (metForms.has(partKey)) continue;
+      metForms.add(partKey);
+      const partLookup = nlp<FwnPlugin>(part).fwnDefinitions();
+      const partDefs = Object.values(partLookup).flat();
+      if (partDefs.length === 0) continue;
+      result.definitions.push({
+        analysis: { ...a, BASEFORM: part },
+        definitions: partDefs,
+      });
+    }
   }
 
   return Promise.resolve(result);
+}
+
+function compoundParts(wordbases: string | undefined): string[] {
+  if (!wordbases) return [];
+  const parts: string[] = [];
+  const re = /\+([^+()]+)(?:\(([^)]+)\))?/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(wordbases))) {
+    const surface = m[1];
+    const base = m[2] ?? surface;
+    if (base.length <= 1 || base === '-') continue;
+    parts.push(base.toLowerCase());
+  }
+  return parts.length > 1 ? parts : [];
 }

@@ -31,4 +31,24 @@ describe('getDefinitionListAsync', () => {
     const result = await getDefinitionListAsync('vetää');
     expect(result).toMatchSnapshot();
   });
+
+  it('returns component definitions for a compound word', async () => {
+    const result = await getDefinitionListAsync('vappukulkueen');
+    expect(result).not.toBeNull();
+    const baseforms = result!.definitions.map((d) => d.analysis.BASEFORM);
+    expect(baseforms).toContain('vappu');
+    expect(baseforms).toContain('kulkue');
+    for (const d of result!.definitions) {
+      if (d.analysis.BASEFORM === 'vappu' || d.analysis.BASEFORM === 'kulkue') {
+        expect(d.definitions.length).toBeGreaterThan(0);
+      }
+    }
+  });
+
+  it('does not duplicate components when the whole word matches the only baseform', async () => {
+    const result = await getDefinitionListAsync('kissa');
+    expect(result).not.toBeNull();
+    const baseforms = result!.definitions.map((d) => d.analysis.BASEFORM);
+    expect(new Set(baseforms).size).toBe(baseforms.length);
+  });
 });
