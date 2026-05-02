@@ -52,7 +52,7 @@
   font-size: 12px;
 }
 
-.fi-base-add[disabled] {
+.fi-base-add[aria-disabled="true"] {
   background: #888;
   cursor: default;
 }
@@ -69,8 +69,8 @@
 
 .fi-known {
   text-decoration: underline wavy #003580;
-  text-decoration-thickness: 2px;
-  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
   cursor: pointer;
 }
 

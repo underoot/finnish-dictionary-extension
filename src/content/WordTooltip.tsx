@@ -63,10 +63,10 @@ export default function WordTooltip({ word, rect, data, loading, dict, translati
                   <span className="fi-base-translation">{translations.get(baseform)}</span>
                 )}
               </div>
-              <button
+              <span
                 className="fi-base-add"
-                disabled={inDict || !baseform}
-                onClick={async (e) => {
+                aria-disabled={inDict || !baseform}
+                onMouseDown={async (e) => {
                   e.stopPropagation();
                   if (!baseform) return;
                   await addEntry({
@@ -81,7 +81,7 @@ export default function WordTooltip({ word, rect, data, loading, dict, translati
                 }}
               >
                 {inDict ? 'Added' : '+ Add'}
-              </button>
+              </span>
             </div>
             {d.definitions.length > 0 ? (
               <ul className="fi-defs">

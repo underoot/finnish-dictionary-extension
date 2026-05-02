@@ -23,6 +23,15 @@ function bootstrap() {
   styleEl.textContent = styles;
   shadow.appendChild(styleEl);
 
+  // Stop tooltip interactions from reaching the page's own event listeners
+  // (e.g. Areena's document-level play/pause handler).
+  // React's e.stopPropagation() only halts synthetic events; native events still
+  // cross the shadow boundary, so we intercept them on the host in the light DOM.
+  const stopProp = (e: Event) => e.stopPropagation();
+  host.addEventListener('click', stopProp);
+  host.addEventListener('mousedown', stopProp);
+  host.addEventListener('pointerdown', stopProp);
+
   const mount = document.createElement('div');
   shadow.appendChild(mount);
 

@@ -23,7 +23,6 @@ export default function App() {
   const tooltipWordRef = useRef<string | null>(null);
   const cmdHeldRef = useRef(false);
   const activeSpanRef = useRef<HTMLElement | null>(null);
-  const wordClickedRef = useRef(false);
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => { if (e.key === 'Meta') cmdHeldRef.current = true; };
@@ -83,14 +82,23 @@ export default function App() {
     setTooltip(null);
   }, []);
 
-  // Close tooltip when clicking outside a word span or the tooltip itself.
+  // Close tooltip on any interaction outside a word span or the tooltip.
+  // Capture phase fires before page stopPropagation (e.g. Areena's video player).
+  // mousedown handles players that start scrubbing before a click fires.
+  // Events inside the tooltip never reach here because main.tsx stops them at the shadow host.
   useEffect(() => {
-    const onDocClick = () => {
-      if (wordClickedRef.current) { wordClickedRef.current = false; return; }
+    const onOutside = (e: MouseEvent) => {
+      const target = e.target as Element | null;
+      if (target?.closest?.(`#__fi-dict-host`)) return;
+      if (target?.closest?.(`.${DECORATED_CLASS}`)) return;
       clearTooltip();
     };
-    document.addEventListener('click', onDocClick);
-    return () => document.removeEventListener('click', onDocClick);
+    document.addEventListener('mousedown', onOutside, true);
+    document.addEventListener('click', onOutside, true);
+    return () => {
+      document.removeEventListener('mousedown', onOutside, true);
+      document.removeEventListener('click', onOutside, true);
+    };
   }, [clearTooltip]);
 
   useEffect(() => {
@@ -108,7 +116,6 @@ export default function App() {
 
     const onWordClick = (e: MouseEvent) => {
       if (cmdHeldRef.current) return;
-      wordClickedRef.current = true;
       const span = e.currentTarget as HTMLElement;
 
       // Toggle: clicking the active word closes the tooltip.
@@ -393,8 +400,8 @@ function injectStyles() {
     .${DECORATED_CLASS}.fi-clickable { cursor: pointer; }
     .${DECORATED_CLASS}.fi-known {
       text-decoration: underline wavy #003580;
-      text-decoration-thickness: 2px;
-      text-underline-offset: 3px;
+      text-decoration-thickness: 1px;
+      text-underline-offset: 2px;
     }
     .${DECORATED_CLASS}.fi-active {
       background: rgba(0, 53, 128, 0.12);

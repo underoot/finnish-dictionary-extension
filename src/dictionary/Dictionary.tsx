@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { getDictionary, onDictionaryChanged, removeEntry } from '../lib/storage';
 import { translationService } from '../lib/translation';
 import { useTranslationProgress } from '../lib/useTranslationProgress';
