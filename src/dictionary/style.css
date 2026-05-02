@@ -16,11 +16,19 @@ h1 {
   margin: 0 0 24px;
 }
 
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
 .filters {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-  margin-bottom: 16px;
 }
 
 .filter {
@@ -42,6 +50,90 @@ h1 {
   background: #003580;
   border-color: #003580;
   color: #fff;
+}
+
+.group-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #444;
+  cursor: pointer;
+  user-select: none;
+}
+
+.toggle-switch {
+  position: relative;
+  width: 36px;
+  height: 20px;
+  background: #ccc;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+
+.toggle-switch.is-on {
+  background: #003580;
+}
+
+.toggle-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  background: #fff;
+  border-radius: 50%;
+  transition: transform 0.2s;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.toggle-switch.is-on .toggle-thumb {
+  transform: translateX(16px);
+}
+
+.group {
+  margin-bottom: 24px;
+}
+
+.group-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #444;
+  padding: 6px 0;
+  border-bottom: 2px solid #eee;
+  margin-bottom: 10px;
+}
+
+.group-header a {
+  color: #003580;
+  text-decoration: none;
+}
+
+.group-header a:hover {
+  text-decoration: underline;
+}
+
+.group-count {
+  font-weight: 400;
+  color: #888;
+  font-size: 12px;
+}
+
+.entry-title-row {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.entry-source-word {
+  font-size: 12px;
+  color: #888;
 }
 
 .entry {

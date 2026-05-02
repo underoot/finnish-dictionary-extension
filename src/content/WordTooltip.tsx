@@ -61,6 +61,7 @@ export default function WordTooltip({ word, rect, data, loading, dict, onMouseEn
                     addedAt: Date.now(),
                     sourceUrl: location.href,
                     sourceTitle: document.title || undefined,
+                    sourceWord: word !== baseform ? word : undefined,
                   });
                 }}
               >

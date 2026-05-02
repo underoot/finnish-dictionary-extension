@@ -17,6 +17,7 @@ export type DictionaryEntry = {
   addedAt: number;
   sourceUrl?: string;
   sourceTitle?: string;
+  sourceWord?: string;
 };
 
 export type DictionaryMap = Record<string, DictionaryEntry>;

@@ -39,9 +39,31 @@ function hostnameOf(url: string): string {
   }
 }
 
+type Group = { key: string; label: string; url: string | null; entries: DictionaryEntry[] };
+
+function groupByUrl(entries: DictionaryEntry[]): Group[] {
+  const map = new Map<string, Group>();
+  for (const e of entries) {
+    const key = e.sourceUrl ?? '';
+    if (!map.has(key)) {
+      const label = e.sourceUrl
+        ? e.sourceTitle || hostnameOf(e.sourceUrl)
+        : 'Unknown source';
+      map.set(key, { key, label, url: e.sourceUrl ?? null, entries: [] });
+    }
+    map.get(key)!.entries.push(e);
+  }
+  return [...map.values()].sort((a, b) => {
+    const aMax = Math.max(...a.entries.map((e) => e.addedAt));
+    const bMax = Math.max(...b.entries.map((e) => e.addedAt));
+    return bMax - aMax;
+  });
+}
+
 export default function Dictionary() {
   const [dict, setDict] = useState<DictionaryMap>({});
   const [filter, setFilter] = useState<Filter>('all');
+  const [grouped, setGrouped] = useState(false);
 
   useEffect(() => {
     getDictionary().then(setDict);
@@ -51,32 +73,53 @@ export default function Dictionary() {
   const allEntries = Object.values(dict).sort((a, b) => b.addedAt - a.addedAt);
   const cutoff = filterCutoff(filter);
   const entries = cutoff === 0 ? allEntries : allEntries.filter((e) => e.addedAt >= cutoff);
+  const groups = grouped ? groupByUrl(entries) : null;
 
   return (
     <div className="wrap">
       <h1>Personal dictionary</h1>
       {allEntries.length > 0 && (
-        <div className="filters" role="tablist" aria-label="Filter entries">
-          {FILTERS.map((f) => (
-            <button
-              key={f.id}
-              role="tab"
-              aria-selected={filter === f.id}
-              className={`filter${filter === f.id ? ' is-active' : ''}`}
-              onClick={() => setFilter(f.id)}
-            >
-              {f.label}
-            </button>
-          ))}
+        <div className="toolbar">
+          <div className="filters" role="tablist" aria-label="Filter entries">
+            {FILTERS.map((f) => (
+              <button
+                key={f.id}
+                role="tab"
+                aria-selected={filter === f.id}
+                className={`filter${filter === f.id ? ' is-active' : ''}`}
+                onClick={() => setFilter(f.id)}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
+          <label className="group-toggle">
+            <span>Group by source</span>
+            <span className={`toggle-switch${grouped ? ' is-on' : ''}`} onClick={() => setGrouped((v) => !v)}>
+              <span className="toggle-thumb" />
+            </span>
+          </label>
         </div>
       )}
       {allEntries.length === 0 && <p className="empty">No entries yet.</p>}
       {allEntries.length > 0 && entries.length === 0 && (
         <p className="empty">No entries in this range.</p>
       )}
-      {entries.map((e) => (
-        <Entry key={e.baseform} entry={e} />
-      ))}
+      {groups
+        ? groups.map((g) => (
+            <div key={g.key} className="group">
+              <div className="group-header">
+                {g.url ? (
+                  <a href={g.url} target="_blank" rel="noreferrer noopener">{g.label}</a>
+                ) : (
+                  <span>{g.label}</span>
+                )}
+                <span className="group-count">{g.entries.length}</span>
+              </div>
+              {g.entries.map((e) => <Entry key={e.baseform} entry={e} />)}
+            </div>
+          ))
+        : entries.map((e) => <Entry key={e.baseform} entry={e} />)}
     </div>
   );
 }
@@ -89,9 +132,12 @@ function Entry({ entry: e }: { entry: DictionaryEntry }) {
   return (
     <div className="entry">
       <div className="entry-header">
-        <div>
+        <div className="entry-title-row">
           <span className="entry-title">{e.baseform}</span>
           {e.wordClass && <span className="entry-class">{e.wordClass}</span>}
+          {e.sourceWord && (
+            <span className="entry-source-word" title="Word form that was looked up">← {e.sourceWord}</span>
+          )}
         </div>
         <button
           className="entry-delete"
