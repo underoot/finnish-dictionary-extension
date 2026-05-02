@@ -1,31 +1,48 @@
 import type { DictionaryEntry, DictionaryMap } from '../types';
 
-const KEY = 'personalDictionary';
+const ENTRY_PREFIX = 'entry:';
 const ACTIVE_KEY = 'activeTabs';
 
+function entryKey(baseform: string): string {
+  return ENTRY_PREFIX + baseform;
+}
+
 export async function getDictionary(): Promise<DictionaryMap> {
-  const obj = await chrome.storage.local.get(KEY);
-  return (obj[KEY] ?? {}) as DictionaryMap;
+  const all = await chrome.storage.local.get(null);
+  const out: DictionaryMap = {};
+  for (const [k, v] of Object.entries(all)) {
+    if (k.startsWith(ENTRY_PREFIX) && v && typeof v === 'object') {
+      out[k.slice(ENTRY_PREFIX.length)] = v as DictionaryEntry;
+    }
+  }
+  return out;
 }
 
-export async function addEntry(entry: DictionaryEntry): Promise<DictionaryMap> {
-  const dict = await getDictionary();
-  dict[entry.baseform] = entry;
-  await chrome.storage.local.set({ [KEY]: dict });
-  return dict;
+export async function addEntry(entry: DictionaryEntry): Promise<void> {
+  await chrome.storage.local.set({ [entryKey(entry.baseform)]: entry });
 }
 
-export async function removeEntry(baseform: string): Promise<DictionaryMap> {
-  const dict = await getDictionary();
-  delete dict[baseform];
-  await chrome.storage.local.set({ [KEY]: dict });
-  return dict;
+export async function removeEntry(baseform: string): Promise<void> {
+  await chrome.storage.local.remove(entryKey(baseform));
 }
 
 export function onDictionaryChanged(cb: (dict: DictionaryMap) => void): () => void {
+  let scheduled = false;
+  const fire = () => {
+    if (scheduled) return;
+    scheduled = true;
+    queueMicrotask(async () => {
+      scheduled = false;
+      cb(await getDictionary());
+    });
+  };
   const listener = (changes: Record<string, chrome.storage.StorageChange>, area: string) => {
-    if (area === 'local' && changes[KEY]) {
-      cb((changes[KEY].newValue ?? {}) as DictionaryMap);
+    if (area !== 'local') return;
+    for (const k of Object.keys(changes)) {
+      if (k.startsWith(ENTRY_PREFIX)) {
+        fire();
+        return;
+      }
     }
   };
   chrome.storage.onChanged.addListener(listener);
