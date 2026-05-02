@@ -119,7 +119,6 @@ export default function App() {
 
 const SKIP_TAGS = new Set(['SCRIPT', 'STYLE', 'NOSCRIPT', 'TEXTAREA', 'INPUT', 'CODE', 'PRE']);
 const FINNISH_WORD = /[A-Za-zÅÄÖåäöÉéÜü]+(?:[-'][A-Za-zÅÄÖåäöÉéÜü]+)*/g;
-const PROCESSED = '__fiDictProcessed';
 const DECORATED_CLASS = 'fi-dict-decorated';
 const BATCH_SIZE = 40;
 
@@ -144,7 +143,7 @@ function decorateRoot(root: Node, onWordClick: (e: MouseEvent) => void) {
       if (!node.nodeValue || !node.nodeValue.trim()) return NodeFilter.FILTER_REJECT;
       const parent = node.parentElement;
       if (!parent) return NodeFilter.FILTER_REJECT;
-      if ((parent as any)[PROCESSED]) return NodeFilter.FILTER_REJECT;
+      if (parent.classList.contains(DECORATED_CLASS)) return NodeFilter.FILTER_REJECT;
       if (parent.closest('#__fi-dict-host')) return NodeFilter.FILTER_REJECT;
       if (SKIP_TAGS.has(parent.tagName)) return NodeFilter.FILTER_REJECT;
       if (parent.isContentEditable) return NodeFilter.FILTER_REJECT;
@@ -161,7 +160,7 @@ function decorateRoot(root: Node, onWordClick: (e: MouseEvent) => void) {
 function decorateTextNode(textNode: Text, onWordClick: (e: MouseEvent) => void) {
   const parent = textNode.parentElement;
   if (!parent) return;
-  if ((parent as any)[PROCESSED]) return;
+  if (parent.classList.contains(DECORATED_CLASS)) return;
   if (SKIP_TAGS.has(parent.tagName)) return;
   if (parent.closest('#__fi-dict-host')) return;
   const text = textNode.nodeValue;
@@ -191,7 +190,6 @@ function decorateTextNode(textNode: Text, onWordClick: (e: MouseEvent) => void) 
   if (!matched) return;
   if (lastIndex < text.length) frag.appendChild(document.createTextNode(text.slice(lastIndex)));
   parent.replaceChild(frag, textNode);
-  (parent as any)[PROCESSED] = true;
 }
 
 const CAPTIONS_SELECTOR = '[aria-label="Tekstitykset"]';
@@ -330,7 +328,6 @@ function undecorate() {
     const parent = span.parentElement;
     if (!parent) return;
     parent.replaceChild(document.createTextNode(span.textContent ?? ''), span);
-    delete (parent as any)[PROCESSED];
     parent.normalize();
   });
   surfaceSpans.clear();

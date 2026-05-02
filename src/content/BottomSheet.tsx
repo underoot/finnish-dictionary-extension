@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import { sendMessage } from '../lib/messages';
 import { addEntry } from '../lib/storage';
 import type { DictionaryMap, WordDefinitionList } from '../types';
@@ -10,9 +11,43 @@ type Props = {
 };
 
 export default function BottomSheet({ data, loading, dict, onClose }: Props) {
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+
+  useEffect(() => {
+    const dlg = dialogRef.current;
+    if (!dlg) return;
+    if (!dlg.open) dlg.showModal();
+    const onCancel = (e: Event) => {
+      e.preventDefault();
+      onCloseRef.current();
+    };
+    const onClickOutside = (e: MouseEvent) => {
+      if (e.target === dlg) onCloseRef.current();
+    };
+    dlg.addEventListener('cancel', onCancel);
+    dlg.addEventListener('click', onClickOutside);
+    return () => {
+      dlg.removeEventListener('cancel', onCancel);
+      dlg.removeEventListener('click', onClickOutside);
+      if (dlg.open) dlg.close();
+    };
+  }, []);
+
   return (
-    <div className="fi-sheet-backdrop" onMouseDown={onClose}>
-      <div className="fi-sheet" onMouseDown={(e) => e.stopPropagation()}>
+    <dialog
+      ref={dialogRef}
+      className="fi-sheet-dialog"
+      onMouseDown={(e) => e.stopPropagation()}
+      onClick={(e) => e.stopPropagation()}
+      onPointerDown={(e) => e.stopPropagation()}
+    >
+      <div
+        className="fi-sheet"
+        onMouseDown={(e) => e.stopPropagation()}
+        onClick={(e) => e.stopPropagation()}
+      >
         <button className="fi-sheet-close" onClick={onClose} aria-label="Close">×</button>
         <h2>{data?.word ?? '...'}</h2>
         {loading && <p className="fi-loading">Looking up…</p>}
@@ -62,6 +97,6 @@ export default function BottomSheet({ data, loading, dict, onClose }: Props) {
           );
         })}
       </div>
-    </div>
+    </dialog>
   );
 }

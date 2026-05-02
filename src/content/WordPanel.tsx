@@ -1,3 +1,5 @@
+import type { SyntheticEvent } from 'react';
+
 type Props = {
   rect: DOMRect;
   onDefinition: () => void;
@@ -6,9 +8,27 @@ type Props = {
 export default function WordPanel({ rect, onDefinition }: Props) {
   const top = Math.max(8, rect.top - 44);
   const left = Math.min(window.innerWidth - 60, rect.left);
+  const stop = (e: SyntheticEvent) => e.stopPropagation();
   return (
-    <div className="fi-panel" style={{ top, left }} onMouseDown={(e) => e.stopPropagation()}>
-      <button title="Definitions" onClick={onDefinition} aria-label="Definitions">
+    <div
+      className="fi-panel"
+      style={{ top, left }}
+      onMouseDown={stop}
+      onMouseUp={stop}
+      onClick={stop}
+      onPointerDown={stop}
+      onPointerUp={stop}
+      onTouchStart={stop}
+      onTouchEnd={stop}
+    >
+      <button
+        title="Definitions"
+        aria-label="Definitions"
+        onClick={(e) => {
+          e.stopPropagation();
+          onDefinition();
+        }}
+      >
         {/* dictionary / book icon */}
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
              strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
