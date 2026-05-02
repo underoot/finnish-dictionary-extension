@@ -71,8 +71,13 @@ export default function App() {
       }
       setSelection(null);
     };
+    const onScroll = () => setSelection(null);
     document.addEventListener('click', onOutside);
-    return () => document.removeEventListener('click', onOutside);
+    window.addEventListener('scroll', onScroll, { passive: true, capture: true });
+    return () => {
+      document.removeEventListener('click', onOutside);
+      window.removeEventListener('scroll', onScroll, { capture: true });
+    };
   }, [active]);
 
   const openDefinitions = async () => {
