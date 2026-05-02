@@ -9,7 +9,7 @@ export default defineManifest({
     default_title: 'Toggle Finnish Dictionary',
   },
   background: {
-    scripts: ['src/background.ts'],
+    service_worker: 'src/background.ts',
     type: 'module',
   },
   content_scripts: [
