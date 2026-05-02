@@ -16,6 +16,34 @@ h1 {
   margin: 0 0 24px;
 }
 
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.filter {
+  cursor: pointer;
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 999px;
+  padding: 5px 12px;
+  font-size: 13px;
+  color: #444;
+}
+
+.filter:hover {
+  border-color: #c0007a;
+  color: #c0007a;
+}
+
+.filter.is-active {
+  background: #c0007a;
+  border-color: #c0007a;
+  color: #fff;
+}
+
 .entry {
   background: #fff;
   border: 1px solid #eee;

@@ -3,6 +3,33 @@ import { getDictionary, onDictionaryChanged, removeEntry } from '../lib/storage'
 import type { DictionaryMap, DictionaryEntry } from '../types';
 
 const COLLAPSE_THRESHOLD = 3;
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+type Filter = 'all' | 'today' | 'week' | 'month';
+
+const FILTERS: { id: Filter; label: string }[] = [
+  { id: 'all', label: 'All' },
+  { id: 'today', label: 'Today' },
+  { id: 'week', label: 'Last 7 days' },
+  { id: 'month', label: 'Last month' },
+];
+
+function filterCutoff(filter: Filter): number {
+  const now = Date.now();
+  switch (filter) {
+    case 'today': {
+      const d = new Date();
+      d.setHours(0, 0, 0, 0);
+      return d.getTime();
+    }
+    case 'week':
+      return now - 7 * DAY_MS;
+    case 'month':
+      return now - 30 * DAY_MS;
+    default:
+      return 0;
+  }
+}
 
 function hostnameOf(url: string): string {
   try {
@@ -14,18 +41,39 @@ function hostnameOf(url: string): string {
 
 export default function Dictionary() {
   const [dict, setDict] = useState<DictionaryMap>({});
+  const [filter, setFilter] = useState<Filter>('all');
 
   useEffect(() => {
     getDictionary().then(setDict);
     return onDictionaryChanged(setDict);
   }, []);
 
-  const entries = Object.values(dict).sort((a, b) => b.addedAt - a.addedAt);
+  const allEntries = Object.values(dict).sort((a, b) => b.addedAt - a.addedAt);
+  const cutoff = filterCutoff(filter);
+  const entries = cutoff === 0 ? allEntries : allEntries.filter((e) => e.addedAt >= cutoff);
 
   return (
     <div className="wrap">
       <h1>Personal dictionary</h1>
-      {entries.length === 0 && <p className="empty">No entries yet.</p>}
+      {allEntries.length > 0 && (
+        <div className="filters" role="tablist" aria-label="Filter entries">
+          {FILTERS.map((f) => (
+            <button
+              key={f.id}
+              role="tab"
+              aria-selected={filter === f.id}
+              className={`filter${filter === f.id ? ' is-active' : ''}`}
+              onClick={() => setFilter(f.id)}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
+      )}
+      {allEntries.length === 0 && <p className="empty">No entries yet.</p>}
+      {allEntries.length > 0 && entries.length === 0 && (
+        <p className="empty">No entries in this range.</p>
+      )}
       {entries.map((e) => (
         <Entry key={e.baseform} entry={e} />
       ))}
