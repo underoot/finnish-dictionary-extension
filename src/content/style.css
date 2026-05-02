@@ -6,7 +6,7 @@
   display: flex;
   gap: 4px;
   padding: 4px;
-  background: #1f1f1f;
+  background: #003580de;
   border-radius: 8px;
   box-shadow: 0 4px 14px rgba(0,0,0,0.3);
   font-family: system-ui, sans-serif;
@@ -24,7 +24,7 @@
 }
 
 .fi-panel button:hover {
-  background: #333;
+  background: #003580;
 }
 
 .fi-sheet-backdrop {
@@ -88,7 +88,7 @@
 
 .fi-base-add {
   cursor: pointer;
-  background: #c0007a;
+  background: #003580;
   color: #fff;
   border: 0;
   border-radius: 6px;
@@ -112,7 +112,7 @@
 }
 
 .fi-known {
-  text-decoration: underline wavy #c0007a;
+  text-decoration: underline wavy #003580;
   text-decoration-thickness: 2px;
   text-underline-offset: 3px;
   cursor: pointer;
@@ -123,7 +123,7 @@
 }
 
 .fi-clickable:hover {
-  background: rgba(192, 0, 122, 0.08);
+  background: rgba(0, 53, 128, 0.08);
 }
 
 .fi-loading { color: #666; font-style: italic; }

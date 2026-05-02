@@ -34,13 +34,13 @@ h1 {
 }
 
 .filter:hover {
-  border-color: #c0007a;
-  color: #c0007a;
+  border-color: #003580;
+  color: #003580;
 }
 
 .filter.is-active {
-  background: #c0007a;
-  border-color: #c0007a;
+  background: #003580;
+  border-color: #003580;
   color: #fff;
 }
 
@@ -77,7 +77,7 @@ h1 {
 }
 
 .entry-meta a {
-  color: #c0007a;
+  color: #003580;
   text-decoration: none;
 }
 
@@ -114,7 +114,7 @@ h1 {
   cursor: pointer;
   background: transparent;
   border: none;
-  color: #c0007a;
+  color: #003580;
   font-size: 13px;
   padding: 2px 0;
   display: inline-flex;

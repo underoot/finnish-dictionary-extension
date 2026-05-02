@@ -7,6 +7,18 @@ export default defineManifest({
   description: 'Toggle dictionary mode on Finnish (lang="fi") pages.',
   action: {
     default_title: 'Toggle Finnish Dictionary',
+    default_icon: {
+      '16': 'src/icons/icon-16.png',
+      '32': 'src/icons/icon-32.png',
+      '48': 'src/icons/icon-48.png',
+      '128': 'src/icons/icon-128.png',
+    },
+  },
+  icons: {
+    '16': 'src/icons/icon-16.png',
+    '32': 'src/icons/icon-32.png',
+    '48': 'src/icons/icon-48.png',
+    '128': 'src/icons/icon-128.png',
   },
   background: {
     service_worker: 'src/background.ts',

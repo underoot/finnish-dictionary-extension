@@ -17,7 +17,8 @@ export default function App() {
   const [sheet, setSheet] = useState<WordDefinitionList | null>(null);
   const [sheetLoading, setSheetLoading] = useState(false);
   const decoratedRef = useRef(false);
-  const cancelLemmasRef = useRef<(() => void) | null>(null);
+  const cancelLemmasRef = useRef<Array<() => void>>([]);
+  const captionsObserverRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     getDictionary().then(setDict);
@@ -46,11 +47,19 @@ export default function App() {
       }
       const baseSet = new Set(Object.keys(dict).map((b) => b.toLowerCase()));
       applyKnownFromCache(baseSet);
-      cancelLemmasRef.current?.();
-      cancelLemmasRef.current = scheduleLemmatize(baseSet);
+      cancelLemmasRef.current.forEach((c) => c());
+      cancelLemmasRef.current = [scheduleLemmatize(baseSet)];
+
+      captionsObserverRef.current?.();
+      captionsObserverRef.current = watchCaptions(onWordClick, () => {
+        applyKnownFromCache(baseSet);
+        cancelLemmasRef.current.push(scheduleLemmatize(baseSet));
+      });
     } else if (decoratedRef.current) {
-      cancelLemmasRef.current?.();
-      cancelLemmasRef.current = null;
+      cancelLemmasRef.current.forEach((c) => c());
+      cancelLemmasRef.current = [];
+      captionsObserverRef.current?.();
+      captionsObserverRef.current = null;
       undecorate();
       decoratedRef.current = false;
       setSelection(null);
@@ -119,7 +128,18 @@ const surfaceBaseforms = new Map<string, string[]>();
 
 function decorate(onWordClick: (e: MouseEvent) => void) {
   surfaceSpans.clear();
-  const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
+  decorateRoot(document.body, onWordClick);
+  injectStyles();
+}
+
+function decorateRoot(root: Node, onWordClick: (e: MouseEvent) => void) {
+  if (root.nodeType !== Node.ELEMENT_NODE && root.nodeType !== Node.DOCUMENT_FRAGMENT_NODE) {
+    if (root.nodeType === Node.TEXT_NODE) {
+      decorateTextNode(root as Text, onWordClick);
+    }
+    return;
+  }
+  const walker = document.createTreeWalker(root as Element, NodeFilter.SHOW_TEXT, {
     acceptNode(node) {
       if (!node.nodeValue || !node.nodeValue.trim()) return NodeFilter.FILTER_REJECT;
       const parent = node.parentElement;
@@ -135,37 +155,116 @@ function decorate(onWordClick: (e: MouseEvent) => void) {
   const targets: Text[] = [];
   let n: Node | null;
   while ((n = walker.nextNode())) targets.push(n as Text);
+  for (const textNode of targets) decorateTextNode(textNode, onWordClick);
+}
 
-  for (const textNode of targets) {
-    const parent = textNode.parentElement;
-    if (!parent) continue;
-    const text = textNode.nodeValue!;
-    const frag = document.createDocumentFragment();
-    let lastIndex = 0;
-    FINNISH_WORD.lastIndex = 0;
-    let m: RegExpExecArray | null;
-    while ((m = FINNISH_WORD.exec(text))) {
-      const word = m[0];
-      const start = m.index;
-      if (start > lastIndex) frag.appendChild(document.createTextNode(text.slice(lastIndex, start)));
-      const span = document.createElement('span');
-      span.dataset.fiWord = word;
-      span.textContent = word;
-      span.classList.add('fi-clickable', DECORATED_CLASS);
-      span.addEventListener('click', onWordClick);
-      const key = word.toLowerCase();
-      const list = surfaceSpans.get(key);
-      if (list) list.push(span);
-      else surfaceSpans.set(key, [span]);
-      frag.appendChild(span);
-      lastIndex = start + word.length;
-    }
-    if (lastIndex < text.length) frag.appendChild(document.createTextNode(text.slice(lastIndex)));
-    parent.replaceChild(frag, textNode);
-    (parent as any)[PROCESSED] = true;
+function decorateTextNode(textNode: Text, onWordClick: (e: MouseEvent) => void) {
+  const parent = textNode.parentElement;
+  if (!parent) return;
+  if ((parent as any)[PROCESSED]) return;
+  if (SKIP_TAGS.has(parent.tagName)) return;
+  if (parent.closest('#__fi-dict-host')) return;
+  const text = textNode.nodeValue;
+  if (!text) return;
+  const frag = document.createDocumentFragment();
+  let lastIndex = 0;
+  FINNISH_WORD.lastIndex = 0;
+  let m: RegExpExecArray | null;
+  let matched = false;
+  while ((m = FINNISH_WORD.exec(text))) {
+    matched = true;
+    const word = m[0];
+    const start = m.index;
+    if (start > lastIndex) frag.appendChild(document.createTextNode(text.slice(lastIndex, start)));
+    const span = document.createElement('span');
+    span.dataset.fiWord = word;
+    span.textContent = word;
+    span.classList.add('fi-clickable', DECORATED_CLASS);
+    span.addEventListener('click', onWordClick);
+    const key = word.toLowerCase();
+    const list = surfaceSpans.get(key);
+    if (list) list.push(span);
+    else surfaceSpans.set(key, [span]);
+    frag.appendChild(span);
+    lastIndex = start + word.length;
   }
+  if (!matched) return;
+  if (lastIndex < text.length) frag.appendChild(document.createTextNode(text.slice(lastIndex)));
+  parent.replaceChild(frag, textNode);
+  (parent as any)[PROCESSED] = true;
+}
 
-  injectStyles();
+const CAPTIONS_SELECTOR = '[aria-label="Tekstitykset"]';
+
+function watchCaptions(onWordClick: (e: MouseEvent) => void, onNewWords: () => void): () => void {
+  let innerObserver: MutationObserver | null = null;
+  let watched: Element | null = null;
+  let outer: MutationObserver | null = null;
+  let scheduled = false;
+
+  const observeInner = () => {
+    if (!innerObserver || !watched) return;
+    innerObserver.observe(watched, { childList: true, subtree: true, characterData: true });
+  };
+
+  const processAdditions = (nodes: Node[]) => {
+    if (!nodes.length) return;
+    innerObserver?.disconnect();
+    for (const node of nodes) {
+      if (!watched || !watched.contains(node)) continue;
+      decorateRoot(node, onWordClick);
+    }
+    observeInner();
+    onNewWords();
+  };
+
+  const attach = (root: Element) => {
+    if (watched === root) return;
+    innerObserver?.disconnect();
+    watched = root;
+    decorateRoot(root, onWordClick);
+    onNewWords();
+    innerObserver = new MutationObserver((mutations) => {
+      const additions: Node[] = [];
+      for (const m of mutations) {
+        if (m.type === 'childList') {
+          m.addedNodes.forEach((node) => additions.push(node));
+        } else if (m.type === 'characterData' && m.target.nodeType === Node.TEXT_NODE) {
+          additions.push(m.target);
+        }
+      }
+      if (!additions.length || scheduled) return;
+      scheduled = true;
+      queueMicrotask(() => {
+        scheduled = false;
+        processAdditions(additions);
+      });
+    });
+    observeInner();
+    outer?.disconnect();
+    outer = null;
+  };
+
+  const armOuter = () => {
+    if (outer) return;
+    outer = new MutationObserver(() => {
+      const found = document.querySelector(CAPTIONS_SELECTOR);
+      if (found) attach(found);
+    });
+    outer.observe(document.body, { childList: true, subtree: true });
+  };
+
+  const existing = document.querySelector(CAPTIONS_SELECTOR);
+  if (existing) attach(existing);
+  else armOuter();
+
+  return () => {
+    outer?.disconnect();
+    outer = null;
+    innerObserver?.disconnect();
+    innerObserver = null;
+    watched = null;
+  };
 }
 
 function applyKnownFromCache(baseSet: Set<string>) {
@@ -244,7 +343,7 @@ function injectStyles() {
   style.textContent = `
     .${DECORATED_CLASS}.fi-clickable { cursor: pointer; }
     .${DECORATED_CLASS}.fi-known {
-      text-decoration: underline wavy #c0007a;
+      text-decoration: underline wavy #003580;
       text-decoration-thickness: 2px;
       text-underline-offset: 3px;
     }
