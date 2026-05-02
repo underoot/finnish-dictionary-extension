@@ -4,7 +4,7 @@ export default defineManifest({
   manifest_version: 3,
   name: 'Finnish Dictionary',
   version: '0.1.0',
-  description: 'Toggle dictionary mode on Finnish (lang="fi") pages.',
+  description: 'Toggle dictionary mode on Finnish pages.',
   action: {
     default_title: 'Toggle Finnish Dictionary',
     default_icon: {
@@ -36,7 +36,13 @@ export default defineManifest({
   host_permissions: ['<all_urls>'],
   web_accessible_resources: [
     {
-      resources: ['src/dictionary/index.html', 'assets/*'],
+      resources: [
+        'src/dictionary/index.html',
+        'assets/*',
+        'translator-worker.js',
+        'bergamot-translator-worker.js',
+        'bergamot-translator-worker.wasm',
+      ],
       matches: ['<all_urls>'],
     },
   ],

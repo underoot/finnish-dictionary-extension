@@ -1,9 +1,29 @@
 import { defineConfig, type Plugin } from 'vite';
-import { readFileSync, writeFileSync } from 'node:fs';
+import { copyFileSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import react from '@vitejs/plugin-react';
 import { crx } from '@crxjs/vite-plugin';
 import manifest from './src/manifest';
+
+const BERGAMOT_WORKER_FILES = [
+  'translator-worker.js',
+  'bergamot-translator-worker.js',
+  'bergamot-translator-worker.wasm',
+];
+
+function copyBergamotWorker(): Plugin {
+  return {
+    name: 'copy-bergamot-worker',
+    buildStart() {
+      const src = resolve(process.cwd(), 'node_modules/@browsermt/bergamot-translator/worker');
+      const dst = resolve(process.cwd(), 'public');
+      mkdirSync(dst, { recursive: true });
+      for (const file of BERGAMOT_WORKER_FILES) {
+        copyFileSync(resolve(src, file), resolve(dst, file));
+      }
+    },
+  };
+}
 
 function backgroundScriptsManifest(): Plugin {
   return {
@@ -52,7 +72,7 @@ function backgroundScriptsManifest(): Plugin {
 }
 
 export default defineConfig({
-  plugins: [react(), crx({ manifest }), backgroundScriptsManifest()],
+  plugins: [copyBergamotWorker(), react(), crx({ manifest }), backgroundScriptsManifest()],
   build: {
     target: 'esnext',
     rollupOptions: {

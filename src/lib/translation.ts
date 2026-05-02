@@ -1,3 +1,5 @@
+import { sendMessage } from './messages';
+
 type ChromeTranslator = {
   translate(text: string): Promise<string>;
 };
@@ -11,10 +13,6 @@ type ChromeTranslatorAPI = {
   }): Promise<ChromeTranslator>;
 };
 
-type FirefoxTranslationsAPI = {
-  translateText(text: string, opts: { fromLanguage: string; toLanguage: string }): Promise<string>;
-};
-
 type ProgressListener = (fraction: number) => void;
 
 function getChromeTranslator(): ChromeTranslatorAPI | null {
@@ -23,10 +21,17 @@ function getChromeTranslator(): ChromeTranslatorAPI | null {
   return null;
 }
 
-function getFirefoxTranslations(): FirefoxTranslationsAPI | null {
-  const g = globalThis as any;
-  if (typeof g.browser?.translations?.translateText === 'function') return g.browser.translations;
-  return null;
+function isFirefox(): boolean {
+  return typeof (globalThis as any).browser !== 'undefined' && !getChromeTranslator();
+}
+
+async function firefoxTranslate(text: string, from: string, to: string): Promise<string | null> {
+  const result = await sendMessage({ type: 'TRANSLATE', text, from, to });
+  if (!result.ok) {
+    console.error('[Bergamot] background error:', result.error);
+    return null;
+  }
+  return (result.data as string) ?? null;
 }
 
 class TranslationService {
@@ -41,15 +46,13 @@ class TranslationService {
   }
 
   get available(): boolean {
-    return getChromeTranslator() !== null || getFirefoxTranslations() !== null;
+    return getChromeTranslator() !== null || isFirefox();
   }
 
-  /** Translate definitions only when browser language is not English. */
   get shouldTranslateDefinitions(): boolean {
     return this.browserLang !== 'en' && this.browserLang !== 'fi';
   }
 
-  /** Skip translation when browser is already Finnish. */
   get shouldTranslate(): boolean {
     return this.browserLang !== 'fi';
   }
@@ -71,13 +74,15 @@ class TranslationService {
       const chromeApi = getChromeTranslator();
       if (chromeApi) {
         result = await this.chromeTranslate(chromeApi, text, from, to);
+      } else if (isFirefox()) {
+        result = await firefoxTranslate(text, from, to);
       } else {
-        const ffApi = getFirefoxTranslations();
-        if (ffApi) result = await ffApi.translateText(text, { fromLanguage: from, toLanguage: to });
+        console.warn('[Translation] No translation API available (not Chrome Translator, not Firefox)');
       }
       if (result !== null) this.textCache.set(key, result);
       return result;
-    } catch {
+    } catch (e) {
+      console.error('[Translation] Unexpected error:', e);
       return null;
     }
   }

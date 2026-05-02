@@ -2,6 +2,7 @@ import voikko from 'voikko';
 import { getDefinitionListAsync } from '../lib/definition.mts';
 import type { Message, MessageResult } from './types';
 import { setTabActive, getActiveTabs } from './lib/storage';
+import { bergamotService } from './lib/bergamot';
 
 const voikkoFi = voikko().init('fi');
 const baseformCache = new Map<string, string[]>();
@@ -76,6 +77,16 @@ async function handleMessage(msg: Message, sender: chrome.runtime.MessageSender)
       const out: Record<string, string[]> = {};
       for (const w of msg.words) out[w] = baseformsOf(w);
       return { ok: true, data: out };
+    }
+    case 'TRANSLATE': {
+      console.log('[Bergamot] translate request:', msg.from, '→', msg.to, JSON.stringify(msg.text.slice(0, 40)));
+      try {
+        const translation = await bergamotService.translate(msg.text, msg.from, msg.to);
+        return { ok: true, data: translation };
+      } catch (e) {
+        console.error('[Bergamot] translate failed:', e);
+        throw e;
+      }
     }
     case 'OPEN_DICTIONARY_PAGE': {
       openDictionaryPage();

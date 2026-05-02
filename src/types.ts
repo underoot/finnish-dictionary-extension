@@ -30,7 +30,8 @@ export type Message =
   | { type: 'GET_DICTIONARY' }
   | { type: 'ADD_ENTRY'; entry: DictionaryEntry }
   | { type: 'REMOVE_ENTRY'; baseform: string }
-  | { type: 'OPEN_DICTIONARY_PAGE' };
+  | { type: 'OPEN_DICTIONARY_PAGE' }
+  | { type: 'TRANSLATE'; text: string; from: string; to: string };
 
 export type MessageResult =
   | { ok: true; data?: any }
