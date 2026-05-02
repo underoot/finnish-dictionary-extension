@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { getDictionary, onDictionaryChanged, removeEntry } from '../lib/storage';
+import { translationService } from '../lib/translation';
+import { useTranslationProgress } from '../lib/useTranslationProgress';
 import type { DictionaryMap, DictionaryEntry } from '../types';
 
 const COLLAPSE_THRESHOLD = 3;
@@ -64,6 +66,9 @@ export default function Dictionary() {
   const [dict, setDict] = useState<DictionaryMap>({});
   const [filter, setFilter] = useState<Filter>('all');
   const [grouped, setGrouped] = useState(false);
+  const [showTranslations, setShowTranslations] = useState(false);
+  const [translations, setTranslations] = useState<Map<string, string>>(new Map());
+  const downloadProgress = useTranslationProgress();
 
   useEffect(() => {
     getDictionary().then(setDict);
@@ -74,6 +79,49 @@ export default function Dictionary() {
   const cutoff = filterCutoff(filter);
   const entries = cutoff === 0 ? allEntries : allEntries.filter((e) => e.addedAt >= cutoff);
   const groups = grouped ? groupByUrl(entries) : null;
+
+  // Always up-to-date via ref so runTranslations() can be a stable callback.
+  const allEntriesRef = useRef(allEntries);
+  allEntriesRef.current = allEntries;
+
+  const runTranslations = useCallback(() => {
+    const toTranslate = allEntriesRef.current;
+    if (!toTranslate.length || !translationService.available) return;
+
+    const texts = new Set<string>();
+    for (const e of toTranslate) {
+      texts.add(e.baseform);
+      if (e.sourceWord) texts.add(e.sourceWord);
+      if (translationService.shouldTranslateDefinitions) {
+        e.definitions.forEach((d) => texts.add(d));
+      }
+    }
+
+    const textsArr = [...texts];
+    Promise.all(textsArr.map((t) => translationService.translate(t))).then((results) => {
+      const map = new Map<string, string>();
+      textsArr.forEach((t, i) => { if (results[i]) map.set(t, results[i]!); });
+      setTranslations(map);
+    });
+  }, []);
+
+  // Re-translate when new entries are saved while translations are already on.
+  // Translator.create() is already cached at this point so no user gesture needed.
+  const allEntriesKey = allEntries.map((e) => e.baseform).join('\x00');
+  useEffect(() => {
+    if (showTranslations) runTranslations();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [allEntriesKey]);
+
+  const toggleTranslations = () => {
+    if (showTranslations) {
+      setShowTranslations(false);
+      setTranslations(new Map());
+    } else {
+      setShowTranslations(true);
+      runTranslations(); // called synchronously in the click handler — preserves user activation
+    }
+  };
 
   return (
     <div className="wrap">
@@ -93,12 +141,28 @@ export default function Dictionary() {
               </button>
             ))}
           </div>
-          <label className="group-toggle">
-            <span>Group by source</span>
-            <span className={`toggle-switch${grouped ? ' is-on' : ''}`} onClick={() => setGrouped((v) => !v)}>
-              <span className="toggle-thumb" />
-            </span>
-          </label>
+          <div className="toolbar-right">
+            {translationService.available && (
+              <label className="group-toggle">
+                <span>Translations</span>
+                <span className={`toggle-switch${showTranslations ? ' is-on' : ''}`} onClick={toggleTranslations}>
+                  <span className="toggle-thumb" />
+                </span>
+              </label>
+            )}
+            <label className="group-toggle">
+              <span>Group by source</span>
+              <span className={`toggle-switch${grouped ? ' is-on' : ''}`} onClick={() => setGrouped((v) => !v)}>
+                <span className="toggle-thumb" />
+              </span>
+            </label>
+          </div>
+        </div>
+      )}
+      {downloadProgress !== null && (
+        <div className="download-progress">
+          <div className="download-bar" style={{ width: `${downloadProgress}%` }} />
+          <span>Downloading translation model… {downloadProgress}%</span>
         </div>
       )}
       {allEntries.length === 0 && <p className="empty">No entries yet.</p>}
@@ -116,15 +180,15 @@ export default function Dictionary() {
                 )}
                 <span className="group-count">{g.entries.length}</span>
               </div>
-              {g.entries.map((e) => <Entry key={e.baseform} entry={e} />)}
+              {g.entries.map((e) => <Entry key={e.baseform} entry={e} translations={translations} />)}
             </div>
           ))
-        : entries.map((e) => <Entry key={e.baseform} entry={e} />)}
+        : entries.map((e) => <Entry key={e.baseform} entry={e} translations={translations} />)}
     </div>
   );
 }
 
-function Entry({ entry: e }: { entry: DictionaryEntry }) {
+function Entry({ entry: e, translations }: { entry: DictionaryEntry; translations: Map<string, string> }) {
   const collapsible = e.definitions.length > COLLAPSE_THRESHOLD;
   const [expanded, setExpanded] = useState(false);
   const visibleDefs = collapsible && !expanded ? e.definitions.slice(0, COLLAPSE_THRESHOLD) : e.definitions;
@@ -133,10 +197,20 @@ function Entry({ entry: e }: { entry: DictionaryEntry }) {
     <div className="entry">
       <div className="entry-header">
         <div className="entry-title-row">
-          <span className="entry-title">{e.baseform}</span>
-          {e.wordClass && <span className="entry-class">{e.wordClass}</span>}
+          <div>
+            <span className="entry-title">{e.baseform}</span>
+            {e.wordClass && <span className="entry-class">{e.wordClass}</span>}
+            {translations.get(e.baseform) && (
+              <span className="entry-translation">{translations.get(e.baseform)}</span>
+            )}
+          </div>
           {e.sourceWord && (
-            <span className="entry-source-word" title="Word form that was looked up">← {e.sourceWord}</span>
+            <div>
+              <span className="entry-source-word" title="Word form that was looked up">← {e.sourceWord}</span>
+              {translations.get(e.sourceWord) && (
+                <span className="entry-translation">{translations.get(e.sourceWord)}</span>
+              )}
+            </div>
           )}
         </div>
         <button
@@ -171,7 +245,12 @@ function Entry({ entry: e }: { entry: DictionaryEntry }) {
       {e.definitions.length > 0 && (
         <ul className="entry-defs">
           {visibleDefs.map((d, i) => (
-            <li key={i}>{d}</li>
+            <li key={i}>
+              {d}
+              {translations.get(d) && (
+                <span className="entry-def-translation">{translations.get(d)}</span>
+              )}
+            </li>
           ))}
         </ul>
       )}

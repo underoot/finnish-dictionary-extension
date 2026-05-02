@@ -1,4 +1,5 @@
 import { addEntry } from '../lib/storage';
+import { useTranslationProgress } from '../lib/useTranslationProgress';
 import type { DictionaryMap, WordDefinitionList } from '../types';
 
 type Props = {
@@ -7,32 +8,43 @@ type Props = {
   data: WordDefinitionList | null;
   loading: boolean;
   dict: DictionaryMap;
-  onMouseEnter: () => void;
-  onMouseLeave: () => void;
+  translations: Map<string, string>;
 };
 
 const POPUP_WIDTH = 320;
 const GAP = 8;
 
-export default function WordTooltip({ word, rect, data, loading, dict, onMouseEnter, onMouseLeave }: Props) {
+export default function WordTooltip({ word, rect, data, loading, dict, translations }: Props) {
+  const downloadProgress = useTranslationProgress();
+
   const left = Math.min(
-    Math.max(8, rect.left + rect.width / 2 - POPUP_WIDTH / 2),
-    window.innerWidth - POPUP_WIDTH - 8,
+    Math.max(GAP, rect.left + rect.width / 2 - POPUP_WIDTH / 2),
+    window.innerWidth - POPUP_WIDTH - GAP,
   );
-  const above = rect.top > 220 || rect.top > window.innerHeight - rect.bottom;
+  const spaceAbove = rect.top - GAP;
+  const spaceBelow = window.innerHeight - rect.bottom - GAP;
+  const above = spaceAbove > spaceBelow;
   const top = above ? rect.top - GAP : rect.bottom + GAP;
+  const maxHeight = Math.max(80, above ? spaceAbove : spaceBelow);
 
   return (
     <div
       className="fi-tooltip"
-      style={{ left, top, transform: above ? 'translateY(-100%)' : 'none' }}
-      onMouseEnter={onMouseEnter}
-      onMouseLeave={onMouseLeave}
+      style={{ left, top, maxHeight, transform: above ? 'translateY(-100%)' : 'none' }}
       onMouseDown={(e) => e.stopPropagation()}
       onClick={(e) => e.stopPropagation()}
       onPointerDown={(e) => e.stopPropagation()}
     >
       <div className="fi-tooltip-word">{word}</div>
+      {translations.get(word) && (
+        <div className="fi-translation">{translations.get(word)}</div>
+      )}
+      {downloadProgress !== null && (
+        <div className="fi-download-progress">
+          <div className="fi-download-bar" style={{ width: `${downloadProgress}%` }} />
+          <span>Downloading translation model… {downloadProgress}%</span>
+        </div>
+      )}
       {loading && <p className="fi-loading">Looking up…</p>}
       {!loading && data && data.definitions.length === 0 && (
         <p className="fi-loading">No analysis available.</p>
@@ -47,6 +59,9 @@ export default function WordTooltip({ word, rect, data, loading, dict, onMouseEn
               <div>
                 <span className="fi-base-title">{baseform}</span>
                 {wordClass && <span className="fi-base-class">{wordClass}</span>}
+                {translations.get(baseform) && (
+                  <span className="fi-base-translation">{translations.get(baseform)}</span>
+                )}
               </div>
               <button
                 className="fi-base-add"
@@ -71,7 +86,12 @@ export default function WordTooltip({ word, rect, data, loading, dict, onMouseEn
             {d.definitions.length > 0 ? (
               <ul className="fi-defs">
                 {d.definitions.map((def, j) => (
-                  <li key={j}>{def}</li>
+                  <li key={j}>
+                    {def}
+                    {translations.get(def) && (
+                      <span className="fi-def-translation">{translations.get(def)}</span>
+                    )}
+                  </li>
                 ))}
               </ul>
             ) : (

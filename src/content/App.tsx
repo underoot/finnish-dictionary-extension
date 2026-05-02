@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import WordTooltip from './WordTooltip';
 import { sendMessage } from '../lib/messages';
 import { getDictionary, onDictionaryChanged } from '../lib/storage';
+import { translationService } from '../lib/translation';
 import type { DictionaryMap, WordDefinitionList } from '../types';
 
 type TooltipState = {
@@ -15,12 +16,14 @@ export default function App() {
   const [active, setActive] = useState(false);
   const [dict, setDict] = useState<DictionaryMap>({});
   const [tooltip, setTooltip] = useState<TooltipState | null>(null);
+  const [translations, setTranslations] = useState<Map<string, string>>(new Map());
   const decoratedRef = useRef(false);
   const cancelLemmasRef = useRef<Array<() => void>>([]);
   const captionsObserverRef = useRef<(() => void) | null>(null);
   const tooltipWordRef = useRef<string | null>(null);
-  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const cmdHeldRef = useRef(false);
+  const activeSpanRef = useRef<HTMLElement | null>(null);
+  const wordClickedRef = useRef(false);
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => { if (e.key === 'Meta') cmdHeldRef.current = true; };
@@ -47,8 +50,46 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    if (!tooltip) { setTranslations(new Map()); return; }
+    if (!tooltip.data || !translationService.available) return;
+
+    const texts: string[] = [tooltip.word];
+    for (const d of tooltip.data.definitions) {
+      if (d.analysis.BASEFORM) texts.push(d.analysis.BASEFORM);
+    }
+    if (translationService.shouldTranslateDefinitions) {
+      for (const d of tooltip.data.definitions) texts.push(...d.definitions);
+    }
+
+    let cancelled = false;
+    Promise.all(texts.map((t) => translationService.translate(t))).then((results) => {
+      if (cancelled) return;
+      const map = new Map<string, string>();
+      texts.forEach((t, i) => { if (results[i]) map.set(t, results[i]!); });
+      setTranslations(map);
+    });
+    return () => { cancelled = true; };
+  }, [tooltip?.word, tooltip?.data]);
+
+  const clearTooltip = useCallback(() => {
+    activeSpanRef.current?.classList.remove('fi-active');
+    activeSpanRef.current = null;
+    tooltipWordRef.current = null;
+    setTooltip(null);
+  }, []);
+
+  // Close tooltip when clicking outside a word span or the tooltip itself.
+  useEffect(() => {
+    const onDocClick = () => {
+      if (wordClickedRef.current) { wordClickedRef.current = false; return; }
+      clearTooltip();
+    };
+    document.addEventListener('click', onDocClick);
+    return () => document.removeEventListener('click', onDocClick);
+  }, [clearTooltip]);
+
+  useEffect(() => {
     const showTooltipFor = (word: string, rect: DOMRect) => {
-      if (closeTimerRef.current) { clearTimeout(closeTimerRef.current); closeTimerRef.current = null; }
       tooltipWordRef.current = word;
       setTooltip({ word, rect, data: null, loading: true });
       sendMessage({ type: 'ANALYZE', word }).then((res) => {
@@ -60,21 +101,27 @@ export default function App() {
       });
     };
 
-    const onWordEnter = (e: MouseEvent) => {
+    const onWordClick = (e: MouseEvent) => {
       if (cmdHeldRef.current) return;
+      wordClickedRef.current = true;
       const span = e.currentTarget as HTMLElement;
-      showTooltipFor(span.dataset.fiWord!, span.getBoundingClientRect());
-    };
 
-    const onWordLeave = () => {
-      if (cmdHeldRef.current) return;
-      tooltipWordRef.current = null;
-      closeTimerRef.current = setTimeout(() => setTooltip(null), 200);
+      // Toggle: clicking the active word closes the tooltip.
+      if (activeSpanRef.current === span) {
+        clearTooltip();
+        return;
+      }
+
+      activeSpanRef.current?.classList.remove('fi-active');
+      span.classList.add('fi-active');
+      activeSpanRef.current = span;
+
+      showTooltipFor(span.dataset.fiWord!, span.getBoundingClientRect());
     };
 
     if (active) {
       if (!decoratedRef.current) {
-        decorate(onWordEnter, onWordLeave);
+        decorate(onWordClick);
         decoratedRef.current = true;
       }
       const baseSet = new Set(Object.keys(dict).map((b) => b.toLowerCase()));
@@ -83,7 +130,7 @@ export default function App() {
       cancelLemmasRef.current = [scheduleLemmatize(baseSet)];
 
       captionsObserverRef.current?.();
-      captionsObserverRef.current = watchCaptions(onWordEnter, onWordLeave, () => {
+      captionsObserverRef.current = watchCaptions(onWordClick, () => {
         applyKnownFromCache(baseSet);
         cancelLemmasRef.current.push(scheduleLemmatize(baseSet));
       });
@@ -94,18 +141,9 @@ export default function App() {
       captionsObserverRef.current = null;
       undecorate();
       decoratedRef.current = false;
-      setTooltip(null);
+      clearTooltip();
     }
-  }, [active, dict]);
-
-  const onTooltipEnter = useCallback(() => {
-    if (closeTimerRef.current) { clearTimeout(closeTimerRef.current); closeTimerRef.current = null; }
-  }, []);
-
-  const onTooltipLeave = useCallback(() => {
-    if (cmdHeldRef.current) return;
-    setTooltip(null);
-  }, []);
+  }, [active, dict, clearTooltip]);
 
   return (
     <div className="fi-no-intercept">
@@ -116,8 +154,7 @@ export default function App() {
           data={tooltip.data}
           loading={tooltip.loading}
           dict={dict}
-          onMouseEnter={onTooltipEnter}
-          onMouseLeave={onTooltipLeave}
+          translations={translations}
         />
       )}
     </div>
@@ -132,16 +169,16 @@ const BATCH_SIZE = 40;
 const surfaceSpans = new Map<string, HTMLSpanElement[]>();
 const surfaceBaseforms = new Map<string, string[]>();
 
-function decorate(onWordEnter: (e: MouseEvent) => void, onWordLeave: (e: MouseEvent) => void) {
+function decorate(onWordClick: (e: MouseEvent) => void) {
   surfaceSpans.clear();
-  decorateRoot(document.body, onWordEnter, onWordLeave);
+  decorateRoot(document.body, onWordClick);
   injectStyles();
 }
 
-function decorateRoot(root: Node, onWordEnter: (e: MouseEvent) => void, onWordLeave: (e: MouseEvent) => void) {
+function decorateRoot(root: Node, onWordClick: (e: MouseEvent) => void) {
   if (root.nodeType !== Node.ELEMENT_NODE && root.nodeType !== Node.DOCUMENT_FRAGMENT_NODE) {
     if (root.nodeType === Node.TEXT_NODE) {
-      decorateTextNode(root as Text, onWordEnter, onWordLeave);
+      decorateTextNode(root as Text, onWordClick);
     }
     return;
   }
@@ -161,10 +198,10 @@ function decorateRoot(root: Node, onWordEnter: (e: MouseEvent) => void, onWordLe
   const targets: Text[] = [];
   let n: Node | null;
   while ((n = walker.nextNode())) targets.push(n as Text);
-  for (const textNode of targets) decorateTextNode(textNode, onWordEnter, onWordLeave);
+  for (const textNode of targets) decorateTextNode(textNode, onWordClick);
 }
 
-function decorateTextNode(textNode: Text, onWordEnter: (e: MouseEvent) => void, onWordLeave: (e: MouseEvent) => void) {
+function decorateTextNode(textNode: Text, onWordClick: (e: MouseEvent) => void) {
   const parent = textNode.parentElement;
   if (!parent) return;
   if (parent.classList.contains(DECORATED_CLASS)) return;
@@ -186,8 +223,7 @@ function decorateTextNode(textNode: Text, onWordEnter: (e: MouseEvent) => void, 
     span.dataset.fiWord = word;
     span.textContent = word;
     span.classList.add('fi-clickable', DECORATED_CLASS);
-    span.addEventListener('mouseenter', onWordEnter);
-    span.addEventListener('mouseleave', onWordLeave);
+    span.addEventListener('click', onWordClick);
     const key = word.toLowerCase();
     const list = surfaceSpans.get(key);
     if (list) list.push(span);
@@ -203,8 +239,7 @@ function decorateTextNode(textNode: Text, onWordEnter: (e: MouseEvent) => void, 
 const CAPTIONS_SELECTOR = '[aria-label="Tekstitykset"]';
 
 function watchCaptions(
-  onWordEnter: (e: MouseEvent) => void,
-  onWordLeave: (e: MouseEvent) => void,
+  onWordClick: (e: MouseEvent) => void,
   onNewWords: () => void,
 ): () => void {
   let innerObserver: MutationObserver | null = null;
@@ -222,7 +257,7 @@ function watchCaptions(
     innerObserver?.disconnect();
     for (const node of nodes) {
       if (!watched || !watched.contains(node)) continue;
-      decorateRoot(node, onWordEnter, onWordLeave);
+      decorateRoot(node, onWordClick);
     }
     observeInner();
     onNewWords();
@@ -232,7 +267,7 @@ function watchCaptions(
     if (watched === root) return;
     innerObserver?.disconnect();
     watched = root;
-    decorateRoot(root, onWordEnter, onWordLeave);
+    decorateRoot(root, onWordClick);
     onNewWords();
     innerObserver = new MutationObserver((mutations) => {
       const additions: Node[] = [];
@@ -355,6 +390,12 @@ function injectStyles() {
       text-decoration: underline wavy #003580;
       text-decoration-thickness: 2px;
       text-underline-offset: 3px;
+    }
+    .${DECORATED_CLASS}.fi-active {
+      background: rgba(0, 53, 128, 0.12);
+      border-radius: 2px;
+      outline: 1px solid rgba(0, 53, 128, 0.25);
+      outline-offset: 1px;
     }
   `;
   document.head.appendChild(style);
