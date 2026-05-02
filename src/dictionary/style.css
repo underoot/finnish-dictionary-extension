@@ -81,6 +81,31 @@ h1 {
   color: #fff;
 }
 
+.entry-toggle {
+  margin-top: 8px;
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  color: #c0007a;
+  font-size: 13px;
+  padding: 2px 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.entry-toggle:hover {
+  text-decoration: underline;
+}
+
+.entry-toggle-chevron {
+  transition: transform 0.15s ease;
+}
+
+.entry-toggle-chevron.is-open {
+  transform: rotate(180deg);
+}
+
 .empty {
   color: #888;
   font-style: italic;
