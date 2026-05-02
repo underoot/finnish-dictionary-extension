@@ -1,0 +1,129 @@
+:host, * { box-sizing: border-box; }
+
+.fi-panel {
+  position: fixed;
+  z-index: 2147483646;
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  background: #1f1f1f;
+  border-radius: 8px;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.3);
+  font-family: system-ui, sans-serif;
+}
+
+.fi-panel button {
+  all: unset;
+  cursor: pointer;
+  padding: 6px 8px;
+  border-radius: 6px;
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.fi-panel button:hover {
+  background: #333;
+}
+
+.fi-sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.35);
+  z-index: 2147483646;
+  display: flex;
+  align-items: flex-end;
+}
+
+.fi-sheet {
+  width: 100%;
+  max-height: 70vh;
+  overflow: auto;
+  background: #fff;
+  color: #111;
+  border-top-left-radius: 16px;
+  border-top-right-radius: 16px;
+  padding: 16px 20px 24px;
+  font-family: system-ui, sans-serif;
+  box-shadow: 0 -8px 24px rgba(0,0,0,0.2);
+}
+
+.fi-sheet h2 {
+  margin: 0 0 8px;
+  font-size: 18px;
+}
+
+.fi-sheet .fi-sheet-close {
+  float: right;
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+  font-size: 20px;
+  line-height: 1;
+}
+
+.fi-base {
+  border-top: 1px solid #eee;
+  padding: 10px 0;
+}
+
+.fi-base-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.fi-base-title {
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.fi-base-class {
+  font-size: 12px;
+  color: #666;
+  margin-left: 8px;
+}
+
+.fi-base-add {
+  cursor: pointer;
+  background: #c0007a;
+  color: #fff;
+  border: 0;
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 12px;
+}
+
+.fi-base-add[disabled] {
+  background: #888;
+  cursor: default;
+}
+
+.fi-defs {
+  margin: 6px 0 0;
+  padding-left: 18px;
+}
+
+.fi-defs li {
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.fi-known {
+  text-decoration: underline wavy #c0007a;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.fi-clickable {
+  cursor: pointer;
+}
+
+.fi-clickable:hover {
+  background: rgba(192, 0, 122, 0.08);
+}
+
+.fi-loading { color: #666; font-style: italic; }

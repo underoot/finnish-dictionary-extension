@@ -1,0 +1,167 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`getDefinitionListAsync > handles a first name (etunimi) 1`] = `
+{
+  "definitions": [
+    {
+      "analysis": {
+        "BASEFORM": "Matti",
+        "CLASS": "etunimi",
+        "FSTOUTPUT": "[Lee][Xp]Matti[X]matt[Sn][Ny]i",
+        "NUMBER": "singular",
+        "SIJAMUOTO": "nimento",
+        "STRUCTURE": "=ipppp",
+        "WORDBASES": "+Matti(Matti)",
+      },
+      "definitions": [],
+    },
+    {
+      "analysis": {
+        "BASEFORM": "matti",
+        "CLASS": "nimisana_laatusana",
+        "COMPARISON": "positive",
+        "FSTOUTPUT": "[Lnl][Xp]matti[X]matt[Sn][Ny]i",
+        "NUMBER": "singular",
+        "SIJAMUOTO": "nimento",
+        "STRUCTURE": "=ppppp",
+        "WORDBASES": "+matti(matti)",
+      },
+      "definitions": [
+        "a chess move constituting an inescapable and indefensible attack on the opponent's king",
+      ],
+    },
+  ],
+  "word": "Matti",
+}
+`;
+
+exports[`getDefinitionListAsync > returns definitions for a common noun 1`] = `
+{
+  "definitions": [
+    {
+      "analysis": {
+        "BASEFORM": "kissa",
+        "CLASS": "nimisana",
+        "FSTOUTPUT": "[Ln][Xp]kissa[X]kiss[Sn][Ny]a",
+        "NUMBER": "singular",
+        "SIJAMUOTO": "nimento",
+        "STRUCTURE": "=ppppp",
+        "WORDBASES": "+kissa(kissa)",
+      },
+      "definitions": [
+        "informal terms for a (young) woman",
+        "any of several large cats typically able to roar and living in the wild",
+        "a cat having black and cream-colored and yellowish markings",
+        "any domesticated member of the genus Felis",
+        "feline mammal usually having thick soft fur and no ability to roar: domestic cats; wildcats",
+        "any of various lithe-bodied roundheaded fissiped mammals, many with retractile claws",
+      ],
+    },
+  ],
+  "word": "kissa",
+}
+`;
+
+exports[`getDefinitionListAsync > returns definitions for a verb 1`] = `
+{
+  "definitions": [
+    {
+      "analysis": {
+        "BASEFORM": "juosta",
+        "CLASS": "teonsana",
+        "FSTOUTPUT": "[Lt][Xp]juosta[X]juost[Tt][Ap][P4][Et]a",
+        "MOOD": "indicative",
+        "NEGATIVE": "true",
+        "PERSON": "4",
+        "STRUCTURE": "=pppppp",
+        "TENSE": "present_simple",
+        "WORDBASES": "+juosta(juosta)",
+      },
+      "definitions": [
+        "move about freely and without restraint, or act as if running around in an uncontrolled way; "who are these people running around in the building?"; "She runs around telling everyone of her troubles"; "let the dogs run free"",
+        "run off as waste; "The water wastes back into the ocean"",
+        "run with the ball; in such sports as football",
+        "move fast by using one's feet, with one foot off the ground at any given time; "Don't run--you'll be out of breath"; "The children ran to the store"",
+        "cover by running; run a certain distance; "She ran 10 miles that day"",
+        "compete in a race; "he is running the Marathon this year"; "let's race and see who gets there first"",
+      ],
+    },
+  ],
+  "word": "juosta",
+}
+`;
+
+exports[`getDefinitionListAsync > returns definitions for an inflected form 1`] = `
+{
+  "definitions": [
+    {
+      "analysis": {
+        "BASEFORM": "kissa",
+        "CLASS": "nimisana",
+        "FSTOUTPUT": "[Ln][Xp]kissa[X]kissa[Sade][Ny]lla",
+        "NUMBER": "singular",
+        "SIJAMUOTO": "ulkoolento",
+        "STRUCTURE": "=pppppppp",
+        "WORDBASES": "+kissa(kissa)",
+      },
+      "definitions": [
+        "informal terms for a (young) woman",
+        "any of several large cats typically able to roar and living in the wild",
+        "a cat having black and cream-colored and yellowish markings",
+        "any domesticated member of the genus Felis",
+        "feline mammal usually having thick soft fur and no ability to roar: domestic cats; wildcats",
+        "any of various lithe-bodied roundheaded fissiped mammals, many with retractile claws",
+      ],
+    },
+  ],
+  "word": "kissalla",
+}
+`;
+
+exports[`getDefinitionListAsync > returns definitions for vetää 1`] = `
+{
+  "definitions": [
+    {
+      "analysis": {
+        "BASEFORM": "vetää",
+        "CLASS": "teonsana",
+        "FSTOUTPUT": "[Lt][Xp]vetää[X]vet[Tt][Ap][P3][Ny][Ef]ää",
+        "MOOD": "indicative",
+        "NEGATIVE": "false",
+        "NUMBER": "singular",
+        "PERSON": "3",
+        "STRUCTURE": "=ppppp",
+        "TENSE": "present_simple",
+        "WORDBASES": "+vetää(vetää)",
+      },
+      "definitions": [
+        "allow a draft; "This chimney draws very well"",
+        "be capable of holding or containing; "This box won't take all the items"; "The flask holds one gallon"",
+        "force into some kind of situation, condition, or course of action; "They were swept up by the events"; "don't drag me into this business"",
+        "be in charge of; "Who is heading this project?"",
+        "cause to move in a certain direction by exerting a force upon, either physically or in an abstract sense; "A declining dollar pulled down the export figures for the last quarter"",
+        "bring, take, or pull out of a container or from under a cover; "draw a weapon"; "pull out a gun"; "The mugger pulled a knife on his victim"",
+        "use a surgical instrument to hold open (the edges of a wound or an organ)",
+        "apply force so as to cause motion towards the source of the motion; "Pull the rope"; "Pull the handle towards you"; "pull the string gently"; "pull the trigger of the gun"; "pull your knees towards your chin"",
+        "remove by drawing or pulling; "She placed the tray down and drew off the cloth"; "draw away the cloth that is covering the cheese"",
+        "make a mark or lines on a surface; "draw a line"; "trace the outline of a figure in the sand"",
+        "take in, also metaphorically; "The sponge absorbs water well"; "She drew strength from the minister's words"",
+        "coil the spring of (some mechanical device) by turning a stem; "wind your watch"",
+        "pull inward or towards a center; "The pilot drew in the landing gear"; "The cat retracted his claws"",
+        "draw slowly or heavily; "haul stones"; "haul nets"",
+        "drag behind; "Horses used to tow barges along the canal"",
+        "pull or strain hard at; "Each oar was tugged by several men"",
+        "pull hard; "The prisoner tugged at the chains"; "This movie tugs at the heart strings"",
+        "cause to move by pulling; "draw a wagon"; "pull a sled"",
+        "remove, usually with some force or effort; also used in an abstract sense; "pull weeds"; "extract a bad tooth"; "take out a splinter"; "extract information from the telegram"",
+        "stretch back a bowstring (on an archer's bow); "The archers were drawing their bows"",
+        "move or pull so as to cover or uncover something; "draw the shades"; "draw the curtains"",
+        "drink alcohol without showing ill effects; "He can hold his liquor"; "he had drunk more than he could carry"",
+        "suck in or take (air); "draw a deep breath"; "draw on a cigarette"",
+        "cause to localize at one point; "Draw blood and pus"",
+      ],
+    },
+  ],
+  "word": "vetää",
+}
+`;
