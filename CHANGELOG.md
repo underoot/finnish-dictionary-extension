@@ -1,3 +1,7 @@
+# v0.1.1
+
+- Improve words looking reliability.
+
 # v0.1.0
 
 - Add support dynamic subtitles on Yle Areena and Yle.

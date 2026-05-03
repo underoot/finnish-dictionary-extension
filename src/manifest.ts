@@ -1,9 +1,10 @@
 import { defineManifest } from '@crxjs/vite-plugin';
+import { version } from '../package.json';
 
 export default defineManifest({
   manifest_version: 3,
   name: 'Finnish Dictionary',
-  version: '0.1.0',
+  version,
   description: 'Toggle dictionary mode on Finnish pages.',
   action: {
     default_title: 'Toggle Finnish Dictionary',
