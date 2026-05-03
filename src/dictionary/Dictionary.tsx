@@ -119,10 +119,7 @@ export default function Dictionary() {
     const texts = new Set<string>();
     for (const e of toTranslate) {
       texts.add(e.baseform);
-      if (e.sourceWord) texts.add(e.sourceWord);
-      if (translationService.shouldTranslateDefinitions) {
-        e.definitions.forEach((d) => texts.add(d));
-      }
+      e.definitions.forEach((d) => texts.add(d));
     }
 
     const textsArr = [...texts];
@@ -350,12 +347,7 @@ function Entry({ entry: e, translations, msgs }: { entry: DictionaryEntry; trans
       {e.definitions.length > 0 && (
         <ul className="entry-defs">
           {visibleDefs.map((d, i) => (
-            <li key={i}>
-              {d}
-              {translations.get(d) && (
-                <span className="entry-def-translation">{translations.get(d)}</span>
-              )}
-            </li>
+            <li key={i}>{translations.get(d) ?? d}</li>
           ))}
         </ul>
       )}
