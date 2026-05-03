@@ -155,7 +155,8 @@ export default function Dictionary() {
       const newLang = changes['pref:targetLang'].newValue;
       if (newLang) translationService.setTargetLang(newLang);
       setTranslations(new Map());
-      if (showTranslationsRef.current) runTranslationsRef.current();
+      setShowTranslations(false);
+      chrome.storage.local.set({ 'pref:showTranslations': false });
     };
     chrome.storage.onChanged.addListener(listener);
     return () => chrome.storage.onChanged.removeListener(listener);
