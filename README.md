@@ -4,7 +4,7 @@ A browser extension for learning Finnish. Activate dictionary mode on any Finnis
 
 ## Features
 
-**🔍 Hover to look up words**
+**🔍 Click to look up words**
 Click the toolbar button to enable dictionary mode. Hover over any Finnish word to see its base form, word class, and definitions. Definitions are translated into your chosen language on the fly using on-device AI — nothing is sent to external servers.
 
 ![Word definition tooltip](media/definition.png)
