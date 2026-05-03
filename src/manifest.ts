@@ -43,6 +43,7 @@ export default defineManifest({
       resources: [
         'src/dictionary/index.html',
         'src/settings/index.html',
+        'src/licenses/index.html',
         'assets/*',
         'translator-worker.js',
         'bergamot-translator-worker.js',

@@ -38,6 +38,10 @@ export type Messages = {
   sidebarPeriod: string;
   sidebarQuizStatus: string;
   sidebarView: string;
+  openSourceLicenses: string;
+  licensesSubtitle: (n: number) => string;
+  licensesSearch: string;
+  licensesEmpty: (q: string) => string;
 };
 
 const en: Messages = {
@@ -80,6 +84,10 @@ const en: Messages = {
   sidebarPeriod: 'Period',
   sidebarQuizStatus: 'Quiz status',
   sidebarView: 'View',
+  openSourceLicenses: 'Open source licenses',
+  licensesSubtitle: (n) => `This extension uses ${n} open source packages.`,
+  licensesSearch: 'Search packages…',
+  licensesEmpty: (q) => `No packages match "${q}".`,
 };
 
 const et: Messages = {
@@ -122,6 +130,10 @@ const et: Messages = {
   sidebarPeriod: 'Periood',
   sidebarQuizStatus: 'Viktoriini olek',
   sidebarView: 'Vaade',
+  openSourceLicenses: 'Avatud lähtekoodiga litsentsid',
+  licensesSubtitle: (n) => `Laiendus kasutab ${n} avatud lähtekoodiga paketti.`,
+  licensesSearch: 'Otsi pakette…',
+  licensesEmpty: (q) => `Pakett „${q}" ei leitud.`,
 };
 
 const ru: Messages = {
@@ -164,6 +176,10 @@ const ru: Messages = {
   sidebarPeriod: 'Период',
   sidebarQuizStatus: 'Статус теста',
   sidebarView: 'Вид',
+  openSourceLicenses: 'Лицензии открытого ПО',
+  licensesSubtitle: (n) => `Расширение использует ${n} пакетов с открытым исходным кодом.`,
+  licensesSearch: 'Поиск пакетов…',
+  licensesEmpty: (q) => `Пакеты «${q}» не найдены.`,
 };
 
 const uk: Messages = {
@@ -206,6 +222,10 @@ const uk: Messages = {
   sidebarPeriod: 'Період',
   sidebarQuizStatus: 'Статус тесту',
   sidebarView: 'Вигляд',
+  openSourceLicenses: 'Ліцензії відкритого ПЗ',
+  licensesSubtitle: (n) => `Розширення використовує ${n} пакетів з відкритим вихідним кодом.`,
+  licensesSearch: 'Пошук пакетів…',
+  licensesEmpty: (q) => `Пакети «${q}» не знайдено.`,
 };
 
 const ar: Messages = {
@@ -248,6 +268,10 @@ const ar: Messages = {
   sidebarPeriod: 'الفترة الزمنية',
   sidebarQuizStatus: 'حالة الاختبار',
   sidebarView: 'العرض',
+  openSourceLicenses: 'تراخيص المصدر المفتوح',
+  licensesSubtitle: (n) => `يستخدم هذا الامتداد ${n} حزمة مفتوحة المصدر.`,
+  licensesSearch: 'ابحث عن الحزم…',
+  licensesEmpty: (q) => `لا توجد حزم تطابق «${q}».`,
 };
 
 const zh: Messages = {
@@ -290,6 +314,10 @@ const zh: Messages = {
   sidebarPeriod: '时间段',
   sidebarQuizStatus: '测验状态',
   sidebarView: '视图',
+  openSourceLicenses: '开源许可证',
+  licensesSubtitle: (n) => `此扩展使用了 ${n} 个开源软件包。`,
+  licensesSearch: '搜索软件包…',
+  licensesEmpty: (q) => `没有匹配「${q}」的软件包。`,
 };
 
 const so: Messages = {
@@ -332,6 +360,10 @@ const so: Messages = {
   sidebarPeriod: 'Muddada',
   sidebarQuizStatus: 'Xaalada imtixaanka',
   sidebarView: 'Muuqaalka',
+  openSourceLicenses: 'Ruqsadaha Koodhka Furan',
+  licensesSubtitle: (n) => `Kordhintani waxay isticmaashaa ${n} baakadood oo furan.`,
+  licensesSearch: 'Raadi baakadaha…',
+  licensesEmpty: (q) => `Baakad la mid ah «${q}» ma jirto.`,
 };
 
 const fil: Messages = {
@@ -374,6 +406,10 @@ const fil: Messages = {
   sidebarPeriod: 'Panahon',
   sidebarQuizStatus: 'Katayuan ng pagsubok',
   sidebarView: 'Tingnan',
+  openSourceLicenses: 'Mga lisensya ng open source',
+  licensesSubtitle: (n) => `Gumagamit ang extension na ito ng ${n} open source na package.`,
+  licensesSearch: 'Maghanap ng mga package…',
+  licensesEmpty: (q) => `Walang package na tumutugma sa «${q}».`,
 };
 
 const hi: Messages = {
@@ -416,6 +452,10 @@ const hi: Messages = {
   sidebarPeriod: 'अवधि',
   sidebarQuizStatus: 'क्विज़ स्थिति',
   sidebarView: 'दृश्य',
+  openSourceLicenses: 'ओपन सोर्स लाइसेंस',
+  licensesSubtitle: (n) => `यह एक्सटेंशन ${n} ओपन सोर्स पैकेज उपयोग करता है।`,
+  licensesSearch: 'पैकेज खोजें…',
+  licensesEmpty: (q) => `«${q}» से मेल खाने वाला कोई पैकेज नहीं।`,
 };
 
 const fa: Messages = {
@@ -458,6 +498,10 @@ const fa: Messages = {
   sidebarPeriod: 'دوره',
   sidebarQuizStatus: 'وضعیت آزمون',
   sidebarView: 'نمایش',
+  openSourceLicenses: 'مجوزهای متن‌باز',
+  licensesSubtitle: (n) => `این افزونه از ${n} بسته متن‌باز استفاده می‌کند.`,
+  licensesSearch: 'جستجوی بسته‌ها…',
+  licensesEmpty: (q) => `هیچ بسته‌ای با «${q}» مطابقت ندارد.`,
 };
 
 export const TRANSLATIONS: Record<string, Messages> = { en, et, ru, uk, ar, zh, so, fil, hi, fa };

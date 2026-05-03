@@ -50,6 +50,25 @@ h1 {
   border-color: #003580;
 }
 
+.settings-footer {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  margin-top: 32px;
+}
+
+.licenses-link {
+  font-size: 13px;
+  color: #888;
+  text-decoration: none;
+}
+
+.licenses-link:hover {
+  color: #003580;
+  text-decoration: underline;
+}
+
 .saved-flash {
   display: inline-block;
   font-size: 13px;

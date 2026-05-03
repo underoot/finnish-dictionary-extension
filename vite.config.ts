@@ -1,6 +1,7 @@
 import { defineConfig, type Plugin } from 'vite';
 import { copyFileSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { execSync } from 'node:child_process';
 import react from '@vitejs/plugin-react';
 import { crx } from '@crxjs/vite-plugin';
 import manifest from './src/manifest';
@@ -21,6 +22,15 @@ function copyBergamotWorker(): Plugin {
       for (const file of BERGAMOT_WORKER_FILES) {
         copyFileSync(resolve(src, file), resolve(dst, file));
       }
+    },
+  };
+}
+
+function generateLicenses(): Plugin {
+  return {
+    name: 'generate-licenses',
+    buildStart() {
+      execSync('node scripts/generate-licenses.js', { stdio: 'inherit' });
     },
   };
 }
@@ -72,13 +82,14 @@ function backgroundScriptsManifest(): Plugin {
 }
 
 export default defineConfig({
-  plugins: [copyBergamotWorker(), react(), crx({ manifest }), backgroundScriptsManifest()],
+  plugins: [generateLicenses(), copyBergamotWorker(), react(), crx({ manifest }), backgroundScriptsManifest()],
   build: {
     target: 'esnext',
     rollupOptions: {
       input: {
         dictionary: 'src/dictionary/index.html',
         settings: 'src/settings/index.html',
+        licenses: 'src/licenses/index.html',
       },
     },
   },

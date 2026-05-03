@@ -65,7 +65,17 @@ export default function Settings() {
           ))}
         </select>
       </div>
-      {saved && <div className="saved-flash">{msgs.saved}</div>}
+      <div className="settings-footer">
+        {saved && <div className="saved-flash">{msgs.saved}</div>}
+        <a
+          className="licenses-link"
+          href={chrome.runtime.getURL('src/licenses/index.html')}
+          target="_blank"
+          rel="noreferrer noopener"
+        >
+          {msgs.openSourceLicenses}
+        </a>
+      </div>
     </div>
   );
 }
