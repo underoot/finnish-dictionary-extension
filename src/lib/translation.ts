@@ -38,11 +38,31 @@ class TranslationService {
   private textCache = new Map<string, string>();
   private translatorCache = new Map<string, Promise<ChromeTranslator>>();
   private progressListeners = new Set<ProgressListener>();
-  readonly browserLang: string;
+  private _targetLang: string;
 
   constructor() {
     const lang = (typeof navigator !== 'undefined' ? navigator.language : 'en').toLowerCase();
-    this.browserLang = lang.split('-')[0];
+    this._targetLang = lang.split('-')[0];
+    if (typeof chrome !== 'undefined' && chrome.storage) {
+      chrome.storage.local.get('pref:targetLang').then((result) => {
+        const stored = result['pref:targetLang'];
+        if (stored && typeof stored === 'string') {
+          this._targetLang = stored;
+          this.textCache.clear();
+          this.translatorCache.clear();
+        }
+      });
+    }
+  }
+
+  get targetLang(): string {
+    return this._targetLang;
+  }
+
+  setTargetLang(lang: string): void {
+    this._targetLang = lang;
+    this.textCache.clear();
+    this.translatorCache.clear();
   }
 
   get available(): boolean {
@@ -50,11 +70,11 @@ class TranslationService {
   }
 
   get shouldTranslateDefinitions(): boolean {
-    return this.browserLang !== 'en' && this.browserLang !== 'fi';
+    return this._targetLang !== 'en' && this._targetLang !== 'fi';
   }
 
   get shouldTranslate(): boolean {
-    return this.browserLang !== 'fi';
+    return this._targetLang !== 'fi';
   }
 
   onDownloadProgress(cb: ProgressListener): () => void {
@@ -63,7 +83,7 @@ class TranslationService {
   }
 
   async translate(text: string, from = 'fi'): Promise<string | null> {
-    const to = this.browserLang;
+    const to = this._targetLang;
     if (!this.shouldTranslate || from === to || !text.trim()) return null;
 
     const key = `${from}\x00${to}\x00${text}`;

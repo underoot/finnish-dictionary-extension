@@ -32,12 +32,17 @@ export default defineManifest({
       run_at: 'document_idle',
     },
   ],
+  options_ui: {
+    page: 'src/settings/index.html',
+    open_in_tab: true,
+  },
   permissions: ['storage', 'contextMenus', 'activeTab', 'scripting'],
   host_permissions: ['<all_urls>'],
   web_accessible_resources: [
     {
       resources: [
         'src/dictionary/index.html',
+        'src/settings/index.html',
         'assets/*',
         'translator-worker.js',
         'bergamot-translator-worker.js',

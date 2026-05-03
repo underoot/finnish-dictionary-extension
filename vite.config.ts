@@ -78,6 +78,7 @@ export default defineConfig({
     rollupOptions: {
       input: {
         dictionary: 'src/dictionary/index.html',
+        settings: 'src/settings/index.html',
       },
     },
   },

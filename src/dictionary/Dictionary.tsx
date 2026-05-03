@@ -2,6 +2,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { getDictionary, onDictionaryChanged, removeEntry, updateQuizStatus } from '../lib/storage';
 import { translationService } from '../lib/translation';
 import { useTranslationProgress } from '../lib/useTranslationProgress';
+import { useLocale } from '../lib/useLocale';
+import type { Messages } from '../lib/i18n';
 import type { DictionaryMap, DictionaryEntry, QuizStatus } from '../types';
 
 const COLLAPSE_THRESHOLD = 3;
@@ -10,19 +12,26 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 type Filter = 'all' | 'today' | 'week' | 'month';
 type QuizFilter = 'all' | 'untouched' | 'remembered' | 'forgotten';
 
-const FILTERS: { id: Filter; label: string }[] = [
-  { id: 'all', label: 'All' },
-  { id: 'today', label: 'Today' },
-  { id: 'week', label: 'Last 7 days' },
-  { id: 'month', label: 'Last month' },
-];
+const FILTERS: Filter[] = ['all', 'today', 'week', 'month'];
+const QUIZ_FILTERS: QuizFilter[] = ['all', 'untouched', 'remembered', 'forgotten'];
 
-const QUIZ_FILTERS: { id: QuizFilter; label: string }[] = [
-  { id: 'all', label: 'All' },
-  { id: 'untouched', label: 'Untouched' },
-  { id: 'remembered', label: 'Remembered' },
-  { id: 'forgotten', label: 'Forgotten' },
-];
+function filterLabel(id: Filter, msgs: Messages): string {
+  switch (id) {
+    case 'all': return msgs.filterAll;
+    case 'today': return msgs.filterToday;
+    case 'week': return msgs.filterWeek;
+    case 'month': return msgs.filterMonth;
+  }
+}
+
+function quizFilterLabel(id: QuizFilter, msgs: Messages): string {
+  switch (id) {
+    case 'all': return msgs.quizFilterAll;
+    case 'untouched': return msgs.quizFilterUntouched;
+    case 'remembered': return msgs.quizFilterRemembered;
+    case 'forgotten': return msgs.quizFilterForgotten;
+  }
+}
 
 function filterCutoff(filter: Filter): number {
   const now = Date.now();
@@ -80,6 +89,7 @@ function groupByUrl(entries: DictionaryEntry[]): Group[] {
 }
 
 export default function Dictionary() {
+  const { msgs, isRtl } = useLocale();
   const [dict, setDict] = useState<DictionaryMap>({});
   const [filter, setFilter] = useState<Filter>('all');
   const [quizFilter, setQuizFilter] = useState<QuizFilter>('all');
@@ -88,11 +98,6 @@ export default function Dictionary() {
   const [translations, setTranslations] = useState<Map<string, string>>(new Map());
   const [quizOpen, setQuizOpen] = useState(false);
   const downloadProgress = useTranslationProgress();
-
-  useEffect(() => {
-    getDictionary().then(setDict);
-    return onDictionaryChanged(setDict);
-  }, []);
 
   const allEntries = Object.values(dict).sort((a, b) => b.addedAt - a.addedAt);
   const cutoff = filterCutoff(filter);
@@ -128,6 +133,37 @@ export default function Dictionary() {
     });
   }, []);
 
+  const showTranslationsRef = useRef(showTranslations);
+  showTranslationsRef.current = showTranslations;
+  const runTranslationsRef = useRef(runTranslations);
+  runTranslationsRef.current = runTranslations;
+
+  useEffect(() => {
+    getDictionary().then(setDict);
+    return onDictionaryChanged(setDict);
+  }, []);
+
+  useEffect(() => {
+    chrome.storage.local.get('pref:showTranslations').then((result) => {
+      if (result['pref:showTranslations']) {
+        setShowTranslations(true);
+        runTranslationsRef.current();
+      }
+    });
+  }, []);
+
+  useEffect(() => {
+    const listener = (changes: Record<string, chrome.storage.StorageChange>, area: string) => {
+      if (area !== 'local' || !('pref:targetLang' in changes)) return;
+      const newLang = changes['pref:targetLang'].newValue;
+      if (newLang) translationService.setTargetLang(newLang);
+      setTranslations(new Map());
+      if (showTranslationsRef.current) runTranslationsRef.current();
+    };
+    chrome.storage.onChanged.addListener(listener);
+    return () => chrome.storage.onChanged.removeListener(listener);
+  }, []);
+
   const allEntriesKey = allEntries.map((e) => e.baseform).join('\x00');
   useEffect(() => {
     if (showTranslations) runTranslations();
@@ -138,50 +174,63 @@ export default function Dictionary() {
     if (showTranslations) {
       setShowTranslations(false);
       setTranslations(new Map());
+      chrome.storage.local.set({ 'pref:showTranslations': false });
     } else {
       setShowTranslations(true);
+      chrome.storage.local.set({ 'pref:showTranslations': true });
       runTranslations();
     }
   };
 
+  const settingsUrl = chrome.runtime.getURL('src/settings/index.html');
+
   if (quizOpen) {
     return (
-      <div className="wrap">
-        <h1>Personal dictionary</h1>
-        <Quiz entries={entries} translations={translations} onClose={() => setQuizOpen(false)} />
+      <div className="wrap" dir={isRtl ? 'rtl' : 'ltr'}>
+        <h1>{msgs.personalDictionary}</h1>
+        <Quiz entries={entries} translations={translations} msgs={msgs} onClose={() => setQuizOpen(false)} />
       </div>
     );
   }
 
   return (
-    <div className="wrap">
-      <h1>Personal dictionary</h1>
+    <div className="wrap" dir={isRtl ? 'rtl' : 'ltr'}>
+      <div className="h1-row">
+        <h1>{msgs.personalDictionary}</h1>
+        <a href={settingsUrl} target="_blank" rel="noreferrer noopener" className="settings-link" title={msgs.settingsTitle}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="3" />
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+          </svg>
+        </a>
+      </div>
       {allEntries.length > 0 && (
         <div className="toolbar">
           <div className="filters" role="tablist" aria-label="Filter entries">
-            {FILTERS.map((f) => (
+            {FILTERS.map((id) => (
               <button
-                key={f.id}
+                key={id}
                 role="tab"
-                aria-selected={filter === f.id}
-                className={`filter${filter === f.id ? ' is-active' : ''}`}
-                onClick={() => setFilter(f.id)}
+                aria-selected={filter === id}
+                className={`filter${filter === id ? ' is-active' : ''}`}
+                onClick={() => setFilter(id)}
               >
-                {f.label}
+                {filterLabel(id, msgs)}
               </button>
             ))}
           </div>
           <div className="toolbar-right">
             {translationService.available && (
               <label className="group-toggle">
-                <span>Translations</span>
+                <span>{msgs.toggleTranslations}</span>
                 <span className={`toggle-switch${showTranslations ? ' is-on' : ''}`} onClick={toggleTranslations}>
                   <span className="toggle-thumb" />
                 </span>
               </label>
             )}
             <label className="group-toggle">
-              <span>Group by source</span>
+              <span>{msgs.toggleGroupBySource}</span>
               <span className={`toggle-switch${grouped ? ' is-on' : ''}`} onClick={() => setGrouped((v) => !v)}>
                 <span className="toggle-thumb" />
               </span>
@@ -192,21 +241,21 @@ export default function Dictionary() {
       {allEntries.length > 0 && (
         <div className="toolbar toolbar-quiz-row">
           <div className="filters" role="tablist" aria-label="Filter by quiz status">
-            {QUIZ_FILTERS.map((f) => (
+            {QUIZ_FILTERS.map((id) => (
               <button
-                key={f.id}
+                key={id}
                 role="tab"
-                aria-selected={quizFilter === f.id}
-                className={`filter filter-quiz filter-quiz-${f.id}${quizFilter === f.id ? ' is-active' : ''}`}
-                onClick={() => setQuizFilter(f.id)}
+                aria-selected={quizFilter === id}
+                className={`filter filter-quiz filter-quiz-${id}${quizFilter === id ? ' is-active' : ''}`}
+                onClick={() => setQuizFilter(id)}
               >
-                {f.label}
+                {quizFilterLabel(id, msgs)}
               </button>
             ))}
           </div>
           {entries.length > 0 && (
             <button className="quiz-start-btn" onClick={() => setQuizOpen(true)}>
-              Start quiz ({entries.length})
+              {msgs.startQuiz(entries.length)}
             </button>
           )}
         </div>
@@ -214,12 +263,12 @@ export default function Dictionary() {
       {downloadProgress !== null && (
         <div className="download-progress">
           <div className="download-bar" style={{ width: `${downloadProgress}%` }} />
-          <span>Downloading translation model… {downloadProgress}%</span>
+          <span>{msgs.downloadingModel(downloadProgress)}</span>
         </div>
       )}
-      {allEntries.length === 0 && <p className="empty">No entries yet.</p>}
+      {allEntries.length === 0 && <p className="empty">{msgs.noEntriesYet}</p>}
       {allEntries.length > 0 && entries.length === 0 && (
-        <p className="empty">No entries in this range.</p>
+        <p className="empty">{msgs.noEntriesInRange}</p>
       )}
       {groups
         ? groups.map((g) => (
@@ -232,15 +281,15 @@ export default function Dictionary() {
                 )}
                 <span className="group-count">{g.entries.length}</span>
               </div>
-              {g.entries.map((e) => <Entry key={e.baseform} entry={e} translations={translations} />)}
+              {g.entries.map((e) => <Entry key={e.baseform} entry={e} translations={translations} msgs={msgs} />)}
             </div>
           ))
-        : entries.map((e) => <Entry key={e.baseform} entry={e} translations={translations} />)}
+        : entries.map((e) => <Entry key={e.baseform} entry={e} translations={translations} msgs={msgs} />)}
     </div>
   );
 }
 
-function Entry({ entry: e, translations }: { entry: DictionaryEntry; translations: Map<string, string> }) {
+function Entry({ entry: e, translations, msgs }: { entry: DictionaryEntry; translations: Map<string, string>; msgs: Messages }) {
   const collapsible = e.definitions.length > COLLAPSE_THRESHOLD;
   const [expanded, setExpanded] = useState(false);
   const visibleDefs = collapsible && !expanded ? e.definitions.slice(0, COLLAPSE_THRESHOLD) : e.definitions;
@@ -265,8 +314,8 @@ function Entry({ entry: e, translations }: { entry: DictionaryEntry; translation
         <button
           className="entry-delete"
           onClick={() => removeEntry(e.baseform)}
-          aria-label="Delete"
-          title="Delete"
+          aria-label={msgs.deleteBtn}
+          title={msgs.deleteBtn}
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -275,16 +324,16 @@ function Entry({ entry: e, translations }: { entry: DictionaryEntry; translation
             <path d="M10 11v6M14 11v6" />
             <path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2" />
           </svg>
-          Delete
+          {msgs.deleteBtn}
         </button>
       </div>
       <div className="entry-meta">
         <span title={new Date(e.addedAt).toISOString()}>
-          Added {new Date(e.addedAt).toLocaleDateString()}
+          {msgs.addedDate(new Date(e.addedAt).toLocaleDateString())}
         </span>
         {e.sourceUrl && (
           <>
-            {' · from '}
+            {' '}{msgs.fromSource}
             <a href={e.sourceUrl} target="_blank" rel="noreferrer noopener">
               {e.sourceTitle || hostnameOf(e.sourceUrl)}
             </a>
@@ -316,7 +365,7 @@ function Entry({ entry: e, translations }: { entry: DictionaryEntry; translation
           >
             <polyline points="6 9 12 15 18 9" />
           </svg>
-          {expanded ? 'Show less' : `Show ${e.definitions.length - COLLAPSE_THRESHOLD} more`}
+          {expanded ? msgs.showLess : msgs.showMore(e.definitions.length - COLLAPSE_THRESHOLD)}
         </button>
       )}
     </div>
@@ -326,10 +375,11 @@ function Entry({ entry: e, translations }: { entry: DictionaryEntry; translation
 interface QuizProps {
   entries: DictionaryEntry[];
   translations: Map<string, string>;
+  msgs: Messages;
   onClose: () => void;
 }
 
-function Quiz({ entries, translations, onClose }: QuizProps) {
+function Quiz({ entries, translations, msgs, onClose }: QuizProps) {
   const [cards] = useState(() => shuffle(entries));
   const [index, setIndex] = useState(0);
   const [flipped, setFlipped] = useState(false);
@@ -356,12 +406,12 @@ function Quiz({ entries, translations, onClose }: QuizProps) {
     return (
       <div className="quiz-done">
         <div className="quiz-done-icon">🎉</div>
-        <h2>Quiz complete!</h2>
+        <h2>{msgs.quizComplete}</h2>
         <p className="quiz-done-stats">
-          <span className="quiz-done-remembered">✓ {remembered} remembered</span>
-          <span className="quiz-done-forgotten">✗ {forgotten} forgotten</span>
+          <span className="quiz-done-remembered">{msgs.quizRemembered(remembered)}</span>
+          <span className="quiz-done-forgotten">{msgs.quizForgotten(forgotten)}</span>
         </p>
-        <button className="quiz-back-btn" onClick={onClose}>Back to dictionary</button>
+        <button className="quiz-back-btn" onClick={onClose}>{msgs.backToDictionary}</button>
       </div>
     );
   }
@@ -369,8 +419,8 @@ function Quiz({ entries, translations, onClose }: QuizProps) {
   return (
     <div className="quiz">
       <div className="quiz-header">
-        <button className="quiz-back-btn" onClick={onClose}>← Back</button>
-        <span className="quiz-progress">{index + 1} / {cards.length}</span>
+        <button className="quiz-back-btn" onClick={onClose}>{msgs.quizBack}</button>
+        <span className="quiz-progress">{msgs.quizProgress(index + 1, cards.length)}</span>
       </div>
       <div className={`quiz-card${flipped ? ' is-flipped' : ''}`} key={index}>
         <div className="quiz-card-inner">
@@ -402,7 +452,7 @@ function Quiz({ entries, translations, onClose }: QuizProps) {
       <div className="quiz-actions">
         {flipped ? (
           <button className="quiz-next-btn" onClick={handleNext}>
-            Next →
+            {msgs.quizNext}
           </button>
         ) : (
           <>

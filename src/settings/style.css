@@ -1,0 +1,62 @@
+body {
+  font-family: system-ui, sans-serif;
+  margin: 0;
+  background: #fafafa;
+  color: #111;
+}
+
+.wrap {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 32px 20px 80px;
+}
+
+h1 {
+  font-size: 22px;
+  margin: 0 0 32px;
+  color: #003580;
+}
+
+.setting-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 24px;
+}
+
+.setting-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #444;
+}
+
+.setting-select {
+  font-family: system-ui, sans-serif;
+  font-size: 14px;
+  color: #111;
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+  appearance: auto;
+  width: 100%;
+  max-width: 320px;
+}
+
+.setting-select:focus {
+  outline: 2px solid #003580;
+  outline-offset: 1px;
+  border-color: #003580;
+}
+
+.saved-flash {
+  display: inline-block;
+  font-size: 13px;
+  color: #1a7a3a;
+  font-weight: 600;
+  padding: 6px 12px;
+  background: #e6f9ed;
+  border-radius: 6px;
+  margin-top: 4px;
+}

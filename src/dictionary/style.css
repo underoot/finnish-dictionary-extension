@@ -13,7 +13,43 @@ body {
 
 h1 {
   font-size: 22px;
-  margin: 0 0 24px;
+  margin: 0;
+}
+
+.h1-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.settings-link {
+  color: #888;
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  padding: 4px;
+  border-radius: 6px;
+  transition: color 0.15s;
+}
+
+.settings-link:hover {
+  color: #003580;
+}
+
+[dir="rtl"] .entry-defs {
+  padding-left: 0;
+  padding-right: 18px;
+}
+
+[dir="rtl"] .entry-class {
+  margin-left: 0;
+  margin-right: 8px;
+}
+
+[dir="rtl"] .quiz-status-badge {
+  margin-left: 0;
+  margin-right: 6px;
 }
 
 .toolbar {

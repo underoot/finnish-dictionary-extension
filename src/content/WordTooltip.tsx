@@ -1,5 +1,6 @@
 import { addEntry } from '../lib/storage';
 import { useTranslationProgress } from '../lib/useTranslationProgress';
+import { useLocale } from '../lib/useLocale';
 import type { DictionaryMap, WordDefinitionList } from '../types';
 
 type Props = {
@@ -17,6 +18,7 @@ const GAP = 8;
 
 export default function WordTooltip({ word, rect, data, loading, dict, translations, translatingDefs }: Props) {
   const downloadProgress = useTranslationProgress();
+  const { msgs } = useLocale();
 
   const left = Math.min(
     Math.max(GAP, rect.left + rect.width / 2 - POPUP_WIDTH / 2),
@@ -43,12 +45,12 @@ export default function WordTooltip({ word, rect, data, loading, dict, translati
       {downloadProgress !== null && (
         <div className="fi-download-progress">
           <div className="fi-download-bar" style={{ width: `${downloadProgress}%` }} />
-          <span>Downloading translation model… {downloadProgress}%</span>
+          <span>{msgs.downloadingModel(downloadProgress)}</span>
         </div>
       )}
-      {loading && <p className="fi-loading">Looking up…</p>}
+      {loading && <p className="fi-loading">{msgs.lookingUp}</p>}
       {!loading && data && data.definitions.length === 0 && (
-        <p className="fi-loading">No analysis available.</p>
+        <p className="fi-loading">{msgs.noAnalysis}</p>
       )}
       {data?.definitions.map((d, i) => {
         const baseform = d.analysis.BASEFORM ?? '';
@@ -81,7 +83,7 @@ export default function WordTooltip({ word, rect, data, loading, dict, translati
                   });
                 }}
               >
-                {inDict ? 'Added' : '+ Add'}
+                {inDict ? msgs.added : msgs.addBtn}
               </span>
             </div>
             {!translatingDefs && (d.definitions.length > 0 ? (
@@ -91,7 +93,7 @@ export default function WordTooltip({ word, rect, data, loading, dict, translati
                 ))}
               </ul>
             ) : (
-              <p className="fi-loading">No definitions in WordNet.</p>
+              <p className="fi-loading">{msgs.noDefinitions}</p>
             ))}
           </div>
         );
