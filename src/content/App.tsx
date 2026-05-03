@@ -21,6 +21,9 @@ export default function App() {
   const decoratedRef = useRef(false);
   const cancelLemmasRef = useRef<Array<() => void>>([]);
   const captionsObserverRef = useRef<(() => void) | null>(null);
+  const bodyObserverRef = useRef<(() => void) | null>(null);
+  const navigateListenerRef = useRef<(() => void) | null>(null);
+  const onWordClickRef = useRef<((e: MouseEvent) => void) | null>(null);
   const tooltipWordRef = useRef<string | null>(null);
   const cmdHeldRef = useRef(false);
   const activeSpanRef = useRef<HTMLElement | null>(null);
@@ -134,6 +137,8 @@ export default function App() {
       showTooltipFor(span.dataset.fiWord!, span.getBoundingClientRect());
     };
 
+    onWordClickRef.current = onWordClick;
+
     if (active) {
       if (!decoratedRef.current) {
         decorate(onWordClick);
@@ -149,11 +154,52 @@ export default function App() {
         applyKnownFromCache(baseSet);
         cancelLemmasRef.current.push(scheduleLemmatize(baseSet));
       });
+
+      bodyObserverRef.current?.();
+      bodyObserverRef.current = watchBody(onWordClick, () => {
+        applyKnownFromCache(baseSet);
+        cancelLemmasRef.current.push(scheduleLemmatize(baseSet));
+      });
+
+      navigateListenerRef.current?.();
+      const onNavigate = () => {
+        const click = onWordClickRef.current;
+        if (!click) return;
+        setTimeout(() => {
+          decorate(click);
+          const bs = new Set(Object.keys(dict).map((b) => b.toLowerCase()));
+          applyKnownFromCache(bs);
+          cancelLemmasRef.current.forEach((c) => c());
+          cancelLemmasRef.current = [scheduleLemmatize(bs)];
+          captionsObserverRef.current?.();
+          captionsObserverRef.current = watchCaptions(click, () => {
+            applyKnownFromCache(bs);
+            cancelLemmasRef.current.push(scheduleLemmatize(bs));
+          });
+          bodyObserverRef.current?.();
+          bodyObserverRef.current = watchBody(click, () => {
+            applyKnownFromCache(bs);
+            cancelLemmasRef.current.push(scheduleLemmatize(bs));
+          });
+        }, 0);
+      };
+      window.addEventListener('popstate', onNavigate);
+      window.addEventListener('hashchange', onNavigate);
+      document.addEventListener('fi-dict:navigate', onNavigate);
+      navigateListenerRef.current = () => {
+        window.removeEventListener('popstate', onNavigate);
+        window.removeEventListener('hashchange', onNavigate);
+        document.removeEventListener('fi-dict:navigate', onNavigate);
+      };
     } else if (decoratedRef.current) {
       cancelLemmasRef.current.forEach((c) => c());
       cancelLemmasRef.current = [];
       captionsObserverRef.current?.();
       captionsObserverRef.current = null;
+      bodyObserverRef.current?.();
+      bodyObserverRef.current = null;
+      navigateListenerRef.current?.();
+      navigateListenerRef.current = null;
       undecorate();
       decoratedRef.current = false;
       clearTooltip();
@@ -250,6 +296,39 @@ function decorateTextNode(textNode: Text, onWordClick: (e: MouseEvent) => void) 
   if (!matched) return;
   if (lastIndex < text.length) frag.appendChild(document.createTextNode(text.slice(lastIndex)));
   parent.replaceChild(frag, textNode);
+}
+
+function watchBody(
+  onWordClick: (e: MouseEvent) => void,
+  onNewWords: () => void,
+): () => void {
+  let scheduled = false;
+  const pending: Node[] = [];
+
+  const observer = new MutationObserver((mutations) => {
+    for (const m of mutations) {
+      if (m.type !== 'childList') continue;
+      m.addedNodes.forEach((node) => {
+        if (node.nodeType === Node.ELEMENT_NODE) {
+          const el = node as Element;
+          if (el.id === '__fi-dict-host') return;
+          if (el.classList.contains(DECORATED_CLASS)) return;
+        }
+        pending.push(node);
+      });
+    }
+    if (!pending.length || scheduled) return;
+    scheduled = true;
+    queueMicrotask(() => {
+      scheduled = false;
+      const nodes = pending.splice(0);
+      for (const node of nodes) decorateRoot(node, onWordClick);
+      onNewWords();
+    });
+  });
+
+  observer.observe(document.body, { childList: true, subtree: true });
+  return () => observer.disconnect();
 }
 
 const CAPTIONS_SELECTOR = '[aria-label="Tekstitykset"]';

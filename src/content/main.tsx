@@ -3,8 +3,24 @@ import { createRoot } from 'react-dom/client';
 import App from './App';
 import styles from './style.css?inline';
 
+injectNavigationDetector();
+
 if (isFinnishPage()) {
   bootstrap();
+}
+
+function injectNavigationDetector() {
+  const fire = () => document.dispatchEvent(new CustomEvent('fi-dict:navigate'));
+  const origPush = history.pushState.bind(history);
+  const origReplace = history.replaceState.bind(history);
+  history.pushState = (...args: Parameters<typeof history.pushState>) => {
+    origPush(...args);
+    fire();
+  };
+  history.replaceState = (...args: Parameters<typeof history.replaceState>) => {
+    origReplace(...args);
+    fire();
+  };
 }
 
 function isFinnishPage(): boolean {

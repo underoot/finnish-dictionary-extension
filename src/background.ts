@@ -70,6 +70,15 @@ chrome.action.onClicked.addListener(async (tab) => {
   chrome.action.setBadgeBackgroundColor({ tabId: tab.id, color: '#c0007a' });
 });
 
+chrome.tabs.onUpdated.addListener(async (tabId, changeInfo) => {
+  if (changeInfo.status !== 'complete') return;
+  const active = await getActiveTabs();
+  if (active[tabId]) {
+    chrome.action.setBadgeText({ tabId, text: 'ON' });
+    chrome.action.setBadgeBackgroundColor({ tabId, color: '#c0007a' });
+  }
+});
+
 chrome.tabs.onRemoved.addListener((tabId) => {
   setTabActive(tabId, false);
 });
