@@ -115,21 +115,23 @@ class TranslationService {
   ): Promise<string> {
     const pairKey = `${from}:${to}`;
     if (!this.translatorCache.has(pairKey)) {
-      const availability = await api.availability({ sourceLanguage: from, targetLanguage: to });
-      if (availability === 'unavailable') throw new Error('unavailable');
-      this.translatorCache.set(
-        pairKey,
-        api.create({
-          sourceLanguage: from,
-          targetLanguage: to,
-          monitor: (m) => {
-            m.addEventListener('downloadprogress', (e: any) => {
-              const fraction: number = e.loaded ?? 0;
-              for (const cb of this.progressListeners) cb(fraction);
-            });
-          },
-        }),
-      );
+      // Call create() synchronously (no await before it) so Chrome considers
+      // this user-gesture-initiated when the model needs downloading.
+      // Clear the cache entry on failure so the next user-gesture call retries.
+      const promise = api.create({
+        sourceLanguage: from,
+        targetLanguage: to,
+        monitor: (m) => {
+          m.addEventListener('downloadprogress', (e: any) => {
+            const fraction: number = e.loaded ?? 0;
+            for (const cb of this.progressListeners) cb(fraction);
+          });
+        },
+      }).catch((err) => {
+        this.translatorCache.delete(pairKey);
+        throw err;
+      });
+      this.translatorCache.set(pairKey, promise);
     }
     const translator = await this.translatorCache.get(pairKey)!;
     return translator.translate(text);
