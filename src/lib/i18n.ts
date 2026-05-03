@@ -35,6 +35,9 @@ export type Messages = {
   interfaceLanguage: string;
   translationLanguage: string;
   saved: string;
+  sidebarPeriod: string;
+  sidebarQuizStatus: string;
+  sidebarView: string;
 };
 
 const en: Messages = {
@@ -74,6 +77,9 @@ const en: Messages = {
   interfaceLanguage: 'Interface language',
   translationLanguage: 'Translation language',
   saved: 'Saved ✓',
+  sidebarPeriod: 'Period',
+  sidebarQuizStatus: 'Quiz status',
+  sidebarView: 'View',
 };
 
 const et: Messages = {
@@ -113,6 +119,9 @@ const et: Messages = {
   interfaceLanguage: 'Liidese keel',
   translationLanguage: 'Tõlkekeel',
   saved: 'Salvestatud ✓',
+  sidebarPeriod: 'Periood',
+  sidebarQuizStatus: 'Viktoriini olek',
+  sidebarView: 'Vaade',
 };
 
 const ru: Messages = {
@@ -152,6 +161,9 @@ const ru: Messages = {
   interfaceLanguage: 'Язык интерфейса',
   translationLanguage: 'Язык перевода',
   saved: 'Сохранено ✓',
+  sidebarPeriod: 'Период',
+  sidebarQuizStatus: 'Статус теста',
+  sidebarView: 'Вид',
 };
 
 const uk: Messages = {
@@ -191,6 +203,9 @@ const uk: Messages = {
   interfaceLanguage: 'Мова інтерфейсу',
   translationLanguage: 'Мова перекладу',
   saved: 'Збережено ✓',
+  sidebarPeriod: 'Період',
+  sidebarQuizStatus: 'Статус тесту',
+  sidebarView: 'Вигляд',
 };
 
 const ar: Messages = {
@@ -230,6 +245,9 @@ const ar: Messages = {
   interfaceLanguage: 'لغة الواجهة',
   translationLanguage: 'لغة الترجمة',
   saved: 'تم الحفظ ✓',
+  sidebarPeriod: 'الفترة الزمنية',
+  sidebarQuizStatus: 'حالة الاختبار',
+  sidebarView: 'العرض',
 };
 
 const zh: Messages = {
@@ -269,6 +287,9 @@ const zh: Messages = {
   interfaceLanguage: '界面语言',
   translationLanguage: '翻译语言',
   saved: '已保存 ✓',
+  sidebarPeriod: '时间段',
+  sidebarQuizStatus: '测验状态',
+  sidebarView: '视图',
 };
 
 const so: Messages = {
@@ -308,6 +329,9 @@ const so: Messages = {
   interfaceLanguage: 'Luqadda xarafka',
   translationLanguage: 'Luqadda turjumaadda',
   saved: 'La keydsaday ✓',
+  sidebarPeriod: 'Muddada',
+  sidebarQuizStatus: 'Xaalada imtixaanka',
+  sidebarView: 'Muuqaalka',
 };
 
 const fil: Messages = {
@@ -347,6 +371,9 @@ const fil: Messages = {
   interfaceLanguage: 'Wika ng interface',
   translationLanguage: 'Wika ng pagsasalin',
   saved: 'Na-save ✓',
+  sidebarPeriod: 'Panahon',
+  sidebarQuizStatus: 'Katayuan ng pagsubok',
+  sidebarView: 'Tingnan',
 };
 
 const hi: Messages = {
@@ -386,6 +413,9 @@ const hi: Messages = {
   interfaceLanguage: 'इंटरफ़ेस भाषा',
   translationLanguage: 'अनुवाद भाषा',
   saved: 'सहेजा गया ✓',
+  sidebarPeriod: 'अवधि',
+  sidebarQuizStatus: 'क्विज़ स्थिति',
+  sidebarView: 'दृश्य',
 };
 
 const fa: Messages = {
@@ -425,6 +455,9 @@ const fa: Messages = {
   interfaceLanguage: 'زبان رابط',
   translationLanguage: 'زبان ترجمه',
   saved: 'ذخیره شد ✓',
+  sidebarPeriod: 'دوره',
+  sidebarQuizStatus: 'وضعیت آزمون',
+  sidebarView: 'نمایش',
 };
 
 export const TRANSLATIONS: Record<string, Messages> = { en, et, ru, uk, ar, zh, so, fil, hi, fa };

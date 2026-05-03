@@ -193,98 +193,105 @@ export default function Dictionary() {
     );
   }
 
+  const settingsGear = (
+    <a href={settingsUrl} target="_blank" rel="noreferrer noopener" className="settings-link" title={msgs.settingsTitle}>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="3" />
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+      </svg>
+    </a>
+  );
+
   return (
     <div className="wrap" dir={isRtl ? 'rtl' : 'ltr'}>
       <div className="h1-row">
         <h1>{msgs.personalDictionary}</h1>
-        <a href={settingsUrl} target="_blank" rel="noreferrer noopener" className="settings-link" title={msgs.settingsTitle}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-               strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="12" r="3" />
-            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
-          </svg>
-        </a>
+        {settingsGear}
       </div>
+
+      {allEntries.length === 0 && <p className="empty">{msgs.noEntriesYet}</p>}
+
       {allEntries.length > 0 && (
-        <div className="toolbar">
-          <div className="filters" role="tablist" aria-label="Filter entries">
-            {FILTERS.map((id) => (
-              <button
-                key={id}
-                role="tab"
-                aria-selected={filter === id}
-                className={`filter${filter === id ? ' is-active' : ''}`}
-                onClick={() => setFilter(id)}
-              >
-                {filterLabel(id, msgs)}
-              </button>
-            ))}
-          </div>
-          <div className="toolbar-right">
-            {translationService.available && (
+        <div className="layout">
+          <aside className="sidebar">
+            <div className="filter-group">
+              <div className="filter-group-label">{msgs.sidebarPeriod}</div>
+              {FILTERS.map((id) => (
+                <button
+                  key={id}
+                  className={`filter${filter === id ? ' is-active' : ''}`}
+                  onClick={() => setFilter(id)}
+                >
+                  {filterLabel(id, msgs)}
+                </button>
+              ))}
+            </div>
+
+            <div className="filter-group">
+              <div className="filter-group-label">{msgs.sidebarQuizStatus}</div>
+              {QUIZ_FILTERS.map((id) => (
+                <button
+                  key={id}
+                  className={`filter filter-quiz filter-quiz-${id}${quizFilter === id ? ' is-active' : ''}`}
+                  onClick={() => setQuizFilter(id)}
+                >
+                  {quizFilterLabel(id, msgs)}
+                </button>
+              ))}
+            </div>
+
+            <div className="filter-group">
+              <div className="filter-group-label">{msgs.sidebarView}</div>
+              {translationService.available && (
+                <label className="group-toggle">
+                  <span>{msgs.toggleTranslations}</span>
+                  <span className={`toggle-switch${showTranslations ? ' is-on' : ''}`} onClick={toggleTranslations}>
+                    <span className="toggle-thumb" />
+                  </span>
+                </label>
+              )}
               <label className="group-toggle">
-                <span>{msgs.toggleTranslations}</span>
-                <span className={`toggle-switch${showTranslations ? ' is-on' : ''}`} onClick={toggleTranslations}>
+                <span>{msgs.toggleGroupBySource}</span>
+                <span className={`toggle-switch${grouped ? ' is-on' : ''}`} onClick={() => setGrouped((v) => !v)}>
                   <span className="toggle-thumb" />
                 </span>
               </label>
-            )}
-            <label className="group-toggle">
-              <span>{msgs.toggleGroupBySource}</span>
-              <span className={`toggle-switch${grouped ? ' is-on' : ''}`} onClick={() => setGrouped((v) => !v)}>
-                <span className="toggle-thumb" />
-              </span>
-            </label>
-          </div>
-        </div>
-      )}
-      {allEntries.length > 0 && (
-        <div className="toolbar toolbar-quiz-row">
-          <div className="filters" role="tablist" aria-label="Filter by quiz status">
-            {QUIZ_FILTERS.map((id) => (
-              <button
-                key={id}
-                role="tab"
-                aria-selected={quizFilter === id}
-                className={`filter filter-quiz filter-quiz-${id}${quizFilter === id ? ' is-active' : ''}`}
-                onClick={() => setQuizFilter(id)}
-              >
-                {quizFilterLabel(id, msgs)}
-              </button>
-            ))}
-          </div>
-          {entries.length > 0 && (
-            <button className="quiz-start-btn" onClick={() => setQuizOpen(true)}>
-              {msgs.startQuiz(entries.length)}
-            </button>
-          )}
-        </div>
-      )}
-      {downloadProgress !== null && (
-        <div className="download-progress">
-          <div className="download-bar" style={{ width: `${downloadProgress}%` }} />
-          <span>{msgs.downloadingModel(downloadProgress)}</span>
-        </div>
-      )}
-      {allEntries.length === 0 && <p className="empty">{msgs.noEntriesYet}</p>}
-      {allEntries.length > 0 && entries.length === 0 && (
-        <p className="empty">{msgs.noEntriesInRange}</p>
-      )}
-      {groups
-        ? groups.map((g) => (
-            <div key={g.key} className="group">
-              <div className="group-header">
-                {g.url ? (
-                  <a href={g.url} target="_blank" rel="noreferrer noopener">{g.label}</a>
-                ) : (
-                  <span>{g.label}</span>
-                )}
-                <span className="group-count">{g.entries.length}</span>
-              </div>
-              {g.entries.map((e) => <Entry key={e.baseform} entry={e} translations={translations} msgs={msgs} />)}
             </div>
-          ))
-        : entries.map((e) => <Entry key={e.baseform} entry={e} translations={translations} msgs={msgs} />)}
+
+            {entries.length > 0 && (
+              <button className="quiz-start-btn" onClick={() => setQuizOpen(true)}>
+                {msgs.startQuiz(entries.length)}
+              </button>
+            )}
+          </aside>
+
+          <div className="entries-area">
+            {downloadProgress !== null && (
+              <div className="download-progress">
+                <div className="download-bar" style={{ width: `${downloadProgress}%` }} />
+                <span>{msgs.downloadingModel(downloadProgress)}</span>
+              </div>
+            )}
+            {entries.length === 0 && <p className="empty">{msgs.noEntriesInRange}</p>}
+            {groups
+              ? groups.map((g) => (
+                  <div key={g.key} className="group">
+                    <div className="group-header">
+                      {g.url ? (
+                        <a href={g.url} target="_blank" rel="noreferrer noopener">{g.label}</a>
+                      ) : (
+                        <span>{g.label}</span>
+                      )}
+                      <span className="group-count">{g.entries.length}</span>
+                    </div>
+                    {g.entries.map((e) => <Entry key={e.baseform} entry={e} translations={translations} msgs={msgs} />)}
+                  </div>
+                ))
+              : entries.map((e) => <Entry key={e.baseform} entry={e} translations={translations} msgs={msgs} />)}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
