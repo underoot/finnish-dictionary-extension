@@ -76,7 +76,7 @@ export default function App() {
       setTranslatingDefs(false);
     }).catch(() => { if (!cancelled) setTranslatingDefs(false); });
     return () => { cancelled = true; };
-  }, [tooltip?.word, tooltip?.data]);
+  }, [tooltip]);
 
   const clearTooltip = useCallback(() => {
     activeSpanRef.current?.classList.remove('fi-active');

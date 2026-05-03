@@ -6,7 +6,7 @@ import globals from 'globals';
 
 export default tseslint.config(
   {
-    ignores: ['dist', 'node_modules', 'scripts/FinnWordNet-2.0', 'lib/fwn-data.mts'],
+    ignores: ['dist', 'node_modules', 'scripts', 'lib/fwn-data.mts', 'public/**/*.js'],
   },
   js.configs.recommended,
   ...tseslint.configs.recommended,
