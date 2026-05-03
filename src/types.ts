@@ -10,6 +10,8 @@ export type WordDefinitionList = {
   definitions: WordDefinition[];
 };
 
+export type QuizStatus = 'remembered' | 'forgotten';
+
 export type DictionaryEntry = {
   baseform: string;
   wordClass?: string;
@@ -18,6 +20,7 @@ export type DictionaryEntry = {
   sourceUrl?: string;
   sourceTitle?: string;
   sourceWord?: string;
+  quizStatus?: QuizStatus;
 };
 
 export type DictionaryMap = Record<string, DictionaryEntry>;

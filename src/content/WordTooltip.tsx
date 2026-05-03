@@ -9,12 +9,13 @@ type Props = {
   loading: boolean;
   dict: DictionaryMap;
   translations: Map<string, string>;
+  translatingDefs: boolean;
 };
 
 const POPUP_WIDTH = 320;
 const GAP = 8;
 
-export default function WordTooltip({ word, rect, data, loading, dict, translations }: Props) {
+export default function WordTooltip({ word, rect, data, loading, dict, translations, translatingDefs }: Props) {
   const downloadProgress = useTranslationProgress();
 
   const left = Math.min(
@@ -83,20 +84,15 @@ export default function WordTooltip({ word, rect, data, loading, dict, translati
                 {inDict ? 'Added' : '+ Add'}
               </span>
             </div>
-            {d.definitions.length > 0 ? (
+            {!translatingDefs && (d.definitions.length > 0 ? (
               <ul className="fi-defs">
                 {d.definitions.map((def, j) => (
-                  <li key={j}>
-                    {def}
-                    {translations.get(def) && (
-                      <span className="fi-def-translation">{translations.get(def)}</span>
-                    )}
-                  </li>
+                  <li key={j}>{translations.get(def) ?? def}</li>
                 ))}
               </ul>
             ) : (
               <p className="fi-loading">No definitions in WordNet.</p>
-            )}
+            ))}
           </div>
         );
       })}

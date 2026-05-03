@@ -1,19 +1,27 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { getDictionary, onDictionaryChanged, removeEntry } from '../lib/storage';
+import { getDictionary, onDictionaryChanged, removeEntry, updateQuizStatus } from '../lib/storage';
 import { translationService } from '../lib/translation';
 import { useTranslationProgress } from '../lib/useTranslationProgress';
-import type { DictionaryMap, DictionaryEntry } from '../types';
+import type { DictionaryMap, DictionaryEntry, QuizStatus } from '../types';
 
 const COLLAPSE_THRESHOLD = 3;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 type Filter = 'all' | 'today' | 'week' | 'month';
+type QuizFilter = 'all' | 'untouched' | 'remembered' | 'forgotten';
 
 const FILTERS: { id: Filter; label: string }[] = [
   { id: 'all', label: 'All' },
   { id: 'today', label: 'Today' },
   { id: 'week', label: 'Last 7 days' },
   { id: 'month', label: 'Last month' },
+];
+
+const QUIZ_FILTERS: { id: QuizFilter; label: string }[] = [
+  { id: 'all', label: 'All' },
+  { id: 'untouched', label: 'Untouched' },
+  { id: 'remembered', label: 'Remembered' },
+  { id: 'forgotten', label: 'Forgotten' },
 ];
 
 function filterCutoff(filter: Filter): number {
@@ -41,6 +49,15 @@ function hostnameOf(url: string): string {
   }
 }
 
+function shuffle<T>(arr: T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
 type Group = { key: string; label: string; url: string | null; entries: DictionaryEntry[] };
 
 function groupByUrl(entries: DictionaryEntry[]): Group[] {
@@ -65,9 +82,11 @@ function groupByUrl(entries: DictionaryEntry[]): Group[] {
 export default function Dictionary() {
   const [dict, setDict] = useState<DictionaryMap>({});
   const [filter, setFilter] = useState<Filter>('all');
+  const [quizFilter, setQuizFilter] = useState<QuizFilter>('all');
   const [grouped, setGrouped] = useState(false);
   const [showTranslations, setShowTranslations] = useState(false);
   const [translations, setTranslations] = useState<Map<string, string>>(new Map());
+  const [quizOpen, setQuizOpen] = useState(false);
   const downloadProgress = useTranslationProgress();
 
   useEffect(() => {
@@ -77,10 +96,14 @@ export default function Dictionary() {
 
   const allEntries = Object.values(dict).sort((a, b) => b.addedAt - a.addedAt);
   const cutoff = filterCutoff(filter);
-  const entries = cutoff === 0 ? allEntries : allEntries.filter((e) => e.addedAt >= cutoff);
+  const dateFiltered = cutoff === 0 ? allEntries : allEntries.filter((e) => e.addedAt >= cutoff);
+  const entries = dateFiltered.filter((e) => {
+    if (quizFilter === 'all') return true;
+    if (quizFilter === 'untouched') return !e.quizStatus;
+    return e.quizStatus === quizFilter;
+  });
   const groups = grouped ? groupByUrl(entries) : null;
 
-  // Always up-to-date via ref so runTranslations() can be a stable callback.
   const allEntriesRef = useRef(allEntries);
   allEntriesRef.current = allEntries;
 
@@ -105,8 +128,6 @@ export default function Dictionary() {
     });
   }, []);
 
-  // Re-translate when new entries are saved while translations are already on.
-  // Translator.create() is already cached at this point so no user gesture needed.
   const allEntriesKey = allEntries.map((e) => e.baseform).join('\x00');
   useEffect(() => {
     if (showTranslations) runTranslations();
@@ -119,9 +140,18 @@ export default function Dictionary() {
       setTranslations(new Map());
     } else {
       setShowTranslations(true);
-      runTranslations(); // called synchronously in the click handler — preserves user activation
+      runTranslations();
     }
   };
+
+  if (quizOpen) {
+    return (
+      <div className="wrap">
+        <h1>Personal dictionary</h1>
+        <Quiz entries={entries} translations={translations} onClose={() => setQuizOpen(false)} />
+      </div>
+    );
+  }
 
   return (
     <div className="wrap">
@@ -157,6 +187,28 @@ export default function Dictionary() {
               </span>
             </label>
           </div>
+        </div>
+      )}
+      {allEntries.length > 0 && (
+        <div className="toolbar toolbar-quiz-row">
+          <div className="filters" role="tablist" aria-label="Filter by quiz status">
+            {QUIZ_FILTERS.map((f) => (
+              <button
+                key={f.id}
+                role="tab"
+                aria-selected={quizFilter === f.id}
+                className={`filter filter-quiz filter-quiz-${f.id}${quizFilter === f.id ? ' is-active' : ''}`}
+                onClick={() => setQuizFilter(f.id)}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
+          {entries.length > 0 && (
+            <button className="quiz-start-btn" onClick={() => setQuizOpen(true)}>
+              Start quiz ({entries.length})
+            </button>
+          )}
         </div>
       )}
       {downloadProgress !== null && (
@@ -200,18 +252,15 @@ function Entry({ entry: e, translations }: { entry: DictionaryEntry; translation
           <div>
             <span className="entry-title">{e.baseform}</span>
             {e.wordClass && <span className="entry-class">{e.wordClass}</span>}
+            {e.quizStatus && (
+              <span className={`quiz-status-badge quiz-status-${e.quizStatus}`}>
+                {e.quizStatus === 'remembered' ? '✓' : '✗'}
+              </span>
+            )}
             {translations.get(e.baseform) && (
               <span className="entry-translation">{translations.get(e.baseform)}</span>
             )}
           </div>
-          {e.sourceWord && (
-            <div>
-              <span className="entry-source-word" title="Word form that was looked up">← {e.sourceWord}</span>
-              {translations.get(e.sourceWord) && (
-                <span className="entry-translation">{translations.get(e.sourceWord)}</span>
-              )}
-            </div>
-          )}
         </div>
         <button
           className="entry-delete"
@@ -270,6 +319,112 @@ function Entry({ entry: e, translations }: { entry: DictionaryEntry; translation
           {expanded ? 'Show less' : `Show ${e.definitions.length - COLLAPSE_THRESHOLD} more`}
         </button>
       )}
+    </div>
+  );
+}
+
+interface QuizProps {
+  entries: DictionaryEntry[];
+  translations: Map<string, string>;
+  onClose: () => void;
+}
+
+function Quiz({ entries, translations, onClose }: QuizProps) {
+  const [cards] = useState(() => shuffle(entries));
+  const [index, setIndex] = useState(0);
+  const [flipped, setFlipped] = useState(false);
+  const [results, setResults] = useState<Map<string, QuizStatus>>(new Map());
+
+  const isDone = index >= cards.length;
+  const current = cards[index];
+
+  const handleAnswer = (status: QuizStatus) => {
+    if (flipped) return;
+    setFlipped(true);
+    updateQuizStatus(current.baseform, status);
+    setResults((prev) => new Map(prev).set(current.baseform, status));
+  };
+
+  const handleNext = () => {
+    setIndex((i) => i + 1);
+    setFlipped(false);
+  };
+
+  if (isDone) {
+    const remembered = [...results.values()].filter((v) => v === 'remembered').length;
+    const forgotten = [...results.values()].filter((v) => v === 'forgotten').length;
+    return (
+      <div className="quiz-done">
+        <div className="quiz-done-icon">🎉</div>
+        <h2>Quiz complete!</h2>
+        <p className="quiz-done-stats">
+          <span className="quiz-done-remembered">✓ {remembered} remembered</span>
+          <span className="quiz-done-forgotten">✗ {forgotten} forgotten</span>
+        </p>
+        <button className="quiz-back-btn" onClick={onClose}>Back to dictionary</button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="quiz">
+      <div className="quiz-header">
+        <button className="quiz-back-btn" onClick={onClose}>← Back</button>
+        <span className="quiz-progress">{index + 1} / {cards.length}</span>
+      </div>
+      <div className={`quiz-card${flipped ? ' is-flipped' : ''}`} key={index}>
+        <div className="quiz-card-inner">
+          <div className="quiz-card-face quiz-card-front">
+            <div className="quiz-word">{current.baseform}</div>
+            {current.wordClass && <div className="quiz-word-class">{current.wordClass}</div>}
+          </div>
+          <div className="quiz-card-face quiz-card-back">
+            <div className="quiz-word quiz-word--back">{current.baseform}</div>
+            {current.wordClass && <div className="quiz-word-class">{current.wordClass}</div>}
+            {translations.get(current.baseform) && (
+              <div className="quiz-translation">{translations.get(current.baseform)}</div>
+            )}
+            {current.definitions.length > 0 && (
+              <ul className="quiz-defs">
+                {current.definitions.slice(0, 3).map((d, i) => (
+                  <li key={i}>
+                    {d}
+                    {translations.get(d) && (
+                      <span className="entry-translation">{translations.get(d)}</span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
+      </div>
+      <div className="quiz-actions">
+        {flipped ? (
+          <button className="quiz-next-btn" onClick={handleNext}>
+            Next →
+          </button>
+        ) : (
+          <>
+            <button
+              className="quiz-btn quiz-btn-forget"
+              onClick={() => handleAnswer('forgotten')}
+              aria-label="Don't remember"
+              title="Don't remember"
+            >
+              ✗
+            </button>
+            <button
+              className="quiz-btn quiz-btn-remember"
+              onClick={() => handleAnswer('remembered')}
+              aria-label="Remember"
+              title="Remember"
+            >
+              ✓
+            </button>
+          </>
+        )}
+      </div>
     </div>
   );
 }

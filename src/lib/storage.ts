@@ -26,6 +26,14 @@ export async function removeEntry(baseform: string): Promise<void> {
   await chrome.storage.local.remove(entryKey(baseform));
 }
 
+export async function updateQuizStatus(baseform: string, status: import('../types').QuizStatus): Promise<void> {
+  const key = entryKey(baseform);
+  const result = await chrome.storage.local.get(key);
+  const entry = result[key] as import('../types').DictionaryEntry | undefined;
+  if (!entry) return;
+  await chrome.storage.local.set({ [key]: { ...entry, quizStatus: status } });
+}
+
 export function onDictionaryChanged(cb: (dict: DictionaryMap) => void): () => void {
   let scheduled = false;
   const fire = () => {

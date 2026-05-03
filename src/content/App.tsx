@@ -17,6 +17,7 @@ export default function App() {
   const [dict, setDict] = useState<DictionaryMap>({});
   const [tooltip, setTooltip] = useState<TooltipState | null>(null);
   const [translations, setTranslations] = useState<Map<string, string>>(new Map());
+  const [translatingDefs, setTranslatingDefs] = useState(false);
   const decoratedRef = useRef(false);
   const cancelLemmasRef = useRef<Array<() => void>>([]);
   const captionsObserverRef = useRef<(() => void) | null>(null);
@@ -54,7 +55,7 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (!tooltip) { setTranslations(new Map()); return; }
+    if (!tooltip) { setTranslations(new Map()); setTranslatingDefs(false); return; }
     if (!tooltip.data || !translationService.available) return;
 
     const texts: string[] = [tooltip.word];
@@ -63,6 +64,7 @@ export default function App() {
     }
     if (translationService.shouldTranslateDefinitions) {
       for (const d of tooltip.data.definitions) texts.push(...d.definitions);
+      setTranslatingDefs(true);
     }
 
     let cancelled = false;
@@ -71,7 +73,8 @@ export default function App() {
       const map = new Map<string, string>();
       texts.forEach((t, i) => { if (results[i]) map.set(t, results[i]!); });
       setTranslations(map);
-    });
+      setTranslatingDefs(false);
+    }).catch(() => { if (!cancelled) setTranslatingDefs(false); });
     return () => { cancelled = true; };
   }, [tooltip?.word, tooltip?.data]);
 
@@ -167,6 +170,7 @@ export default function App() {
           loading={tooltip.loading}
           dict={dict}
           translations={translations}
+          translatingDefs={translatingDefs}
         />
       )}
     </div>
