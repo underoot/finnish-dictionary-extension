@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useLocale } from '../lib/useLocale';
 import licensesData from './licenses.json';
 
@@ -15,6 +15,7 @@ const entries = licensesData as LicenseEntry[];
 
 export default function Licenses() {
   const { msgs, isRtl } = useLocale();
+  useEffect(() => { document.title = msgs.openSourceLicenses; }, [msgs]);
   const [query, setQuery] = useState('');
   const [expanded, setExpanded] = useState<string | null>(null);
 

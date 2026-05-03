@@ -90,6 +90,7 @@ function groupByUrl(entries: DictionaryEntry[]): Group[] {
 
 export default function Dictionary() {
   const { msgs, isRtl } = useLocale();
+  useEffect(() => { document.title = msgs.personalDictionary; }, [msgs]);
   const [dict, setDict] = useState<DictionaryMap>({});
   const [filter, setFilter] = useState<Filter>('all');
   const [quizFilter, setQuizFilter] = useState<QuizFilter>('all');

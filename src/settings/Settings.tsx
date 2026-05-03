@@ -5,6 +5,7 @@ import { translationService } from '../lib/translation';
 
 export default function Settings() {
   const { msgs, isRtl } = useLocale();
+  useEffect(() => { document.title = msgs.settingsTitle; }, [msgs]);
   const [uiLocale, setUiLocale] = useState('');
   const [targetLang, setTargetLang] = useState('');
   const [saved, setSaved] = useState(false);

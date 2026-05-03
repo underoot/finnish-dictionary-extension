@@ -3,6 +3,7 @@ import { getDefinitionListAsync } from '../lib/definition.mts';
 import type { Message, MessageResult } from './types';
 import { setTabActive, getActiveTabs } from './lib/storage';
 import { bergamotService } from './lib/bergamot';
+import { TRANSLATIONS } from './lib/i18n';
 
 const voikkoFi = voikko().init('fi');
 const baseformCache = new Map<string, string[]>();
@@ -20,14 +21,33 @@ function baseformsOf(word: string): string[] {
   return arr;
 }
 
+async function getLocalizedMsgs() {
+  const result = await chrome.storage.local.get('pref:uiLocale');
+  const locale = result['pref:uiLocale'] as string | undefined ?? '';
+  return TRANSLATIONS[locale] ?? TRANSLATIONS['en'];
+}
+
 const CONTEXT_MENU_ID = 'open-personal-dictionary';
 
-chrome.runtime.onInstalled.addListener(() => {
+chrome.runtime.onInstalled.addListener(async () => {
+  const msgs = await getLocalizedMsgs();
   chrome.contextMenus.create({
     id: CONTEXT_MENU_ID,
-    title: 'Personal dictionary',
+    title: msgs.personalDictionary,
     contexts: ['action'],
   });
+  chrome.action.setTitle({ title: msgs.actionTitle });
+});
+
+chrome.storage.onChanged.addListener(async (changes) => {
+  if (!changes['pref:uiLocale']) return;
+  const msgs = await getLocalizedMsgs();
+  try {
+    await chrome.contextMenus.update(CONTEXT_MENU_ID, { title: msgs.personalDictionary });
+  } catch {
+    chrome.contextMenus.create({ id: CONTEXT_MENU_ID, title: msgs.personalDictionary, contexts: ['action'] });
+  }
+  chrome.action.setTitle({ title: msgs.actionTitle });
 });
 
 chrome.contextMenus.onClicked.addListener((info) => {

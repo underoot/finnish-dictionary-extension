@@ -42,6 +42,7 @@ export type Messages = {
   licensesSubtitle: (n: number) => string;
   licensesSearch: string;
   licensesEmpty: (q: string) => string;
+  actionTitle: string;
 };
 
 const en: Messages = {
@@ -88,6 +89,7 @@ const en: Messages = {
   licensesSubtitle: (n) => `This extension uses ${n} open source packages.`,
   licensesSearch: 'Search packages…',
   licensesEmpty: (q) => `No packages match "${q}".`,
+  actionTitle: 'Toggle Finnish Dictionary',
 };
 
 const et: Messages = {
@@ -134,6 +136,7 @@ const et: Messages = {
   licensesSubtitle: (n) => `Laiendus kasutab ${n} avatud lähtekoodiga paketti.`,
   licensesSearch: 'Otsi pakette…',
   licensesEmpty: (q) => `Pakett „${q}" ei leitud.`,
+  actionTitle: 'Lülita soome sõnaraamat',
 };
 
 const ru: Messages = {
@@ -180,6 +183,7 @@ const ru: Messages = {
   licensesSubtitle: (n) => `Расширение использует ${n} пакетов с открытым исходным кодом.`,
   licensesSearch: 'Поиск пакетов…',
   licensesEmpty: (q) => `Пакеты «${q}» не найдены.`,
+  actionTitle: 'Переключить финский словарь',
 };
 
 const uk: Messages = {
@@ -226,6 +230,7 @@ const uk: Messages = {
   licensesSubtitle: (n) => `Розширення використовує ${n} пакетів з відкритим вихідним кодом.`,
   licensesSearch: 'Пошук пакетів…',
   licensesEmpty: (q) => `Пакети «${q}» не знайдено.`,
+  actionTitle: 'Перемкнути фінський словник',
 };
 
 const ar: Messages = {
@@ -272,6 +277,7 @@ const ar: Messages = {
   licensesSubtitle: (n) => `يستخدم هذا الامتداد ${n} حزمة مفتوحة المصدر.`,
   licensesSearch: 'ابحث عن الحزم…',
   licensesEmpty: (q) => `لا توجد حزم تطابق «${q}».`,
+  actionTitle: 'تبديل القاموس الفنلندي',
 };
 
 const zh: Messages = {
@@ -318,6 +324,7 @@ const zh: Messages = {
   licensesSubtitle: (n) => `此扩展使用了 ${n} 个开源软件包。`,
   licensesSearch: '搜索软件包…',
   licensesEmpty: (q) => `没有匹配「${q}」的软件包。`,
+  actionTitle: '切换芬兰语词典',
 };
 
 const so: Messages = {
@@ -364,6 +371,7 @@ const so: Messages = {
   licensesSubtitle: (n) => `Kordhintani waxay isticmaashaa ${n} baakadood oo furan.`,
   licensesSearch: 'Raadi baakadaha…',
   licensesEmpty: (q) => `Baakad la mid ah «${q}» ma jirto.`,
+  actionTitle: 'Bedel Qaamuuska Falankayz',
 };
 
 const fil: Messages = {
@@ -410,6 +418,7 @@ const fil: Messages = {
   licensesSubtitle: (n) => `Gumagamit ang extension na ito ng ${n} open source na package.`,
   licensesSearch: 'Maghanap ng mga package…',
   licensesEmpty: (q) => `Walang package na tumutugma sa «${q}».`,
+  actionTitle: 'I-toggle ang Finnish Dictionary',
 };
 
 const hi: Messages = {
@@ -456,6 +465,7 @@ const hi: Messages = {
   licensesSubtitle: (n) => `यह एक्सटेंशन ${n} ओपन सोर्स पैकेज उपयोग करता है।`,
   licensesSearch: 'पैकेज खोजें…',
   licensesEmpty: (q) => `«${q}» से मेल खाने वाला कोई पैकेज नहीं।`,
+  actionTitle: 'फ़िनिश शब्दकोश टॉगल करें',
 };
 
 const fa: Messages = {
@@ -502,6 +512,7 @@ const fa: Messages = {
   licensesSubtitle: (n) => `این افزونه از ${n} بسته متن‌باز استفاده می‌کند.`,
   licensesSearch: 'جستجوی بسته‌ها…',
   licensesEmpty: (q) => `هیچ بسته‌ای با «${q}» مطابقت ندارد.`,
+  actionTitle: 'تغییر وضعیت فرهنگ‌لغت فنلاندی',
 };
 
 export const TRANSLATIONS: Record<string, Messages> = { en, et, ru, uk, ar, zh, so, fil, hi, fa };
