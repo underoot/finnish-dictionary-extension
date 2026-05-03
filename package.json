@@ -1,5 +1,5 @@
 {
-  "name": "fi-dictionary-extension",
+  "name": "@underoot/finnish-dictionary-extension",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -10,7 +10,8 @@
     "test": "vitest run",
     "test:types": "tsc --noEmit",
     "lint": "eslint .",
-    "lint:fix": "eslint . --fix"
+    "lint:fix": "eslint . --fix",
+    "pack": "npm run build && node scripts/pack.js"
   },
   "dependencies": {
     "@browsermt/bergamot-translator": "^0.4.9",
