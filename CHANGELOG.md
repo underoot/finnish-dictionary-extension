@@ -1,6 +1,4 @@
-# Changelog
-
-## v0.1.0
+# v0.1.0
 
 - Add support dynamic subtitles on Yle Areena and Yle.
 - Add definitions mode for finnish pages.
