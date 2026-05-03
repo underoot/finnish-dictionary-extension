@@ -55,4 +55,10 @@ export default defineManifest({
   content_security_policy: {
     extension_pages: "script-src 'self' 'wasm-unsafe-eval'; object-src 'self';",
   },
-});
+  browser_specific_settings: {
+    gecko: {
+      id: 'finnish.dictionary@underoot.dev',
+      strict_min_version: '128.0',
+    },
+  },
+} as any);

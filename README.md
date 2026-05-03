@@ -1,4 +1,4 @@
-# Finnish Dictionary
+# Finnish Dictionary Extension 🇫🇮
 
 A browser extension for learning Finnish. Activate dictionary mode on any Finnish page to look up words instantly — no copy-pasting, no switching tabs.
 
