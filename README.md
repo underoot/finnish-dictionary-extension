@@ -7,11 +7,17 @@ A browser extension for learning Finnish. Activate dictionary mode on any Finnis
 **Hover to look up words**
 Click the toolbar button to enable dictionary mode. Hover over any Finnish word to see its base form, word class, and definitions. Definitions are translated into your chosen language on the fly using on-device AI — nothing is sent to external servers.
 
+![Word definition tooltip](media/definition.png)
+
+![Dictionary mode on subtitles](media/subtitles.png)
+
 **Personal dictionary**
 Save words you want to remember with one click. Your personal dictionary shows when each word was added and from which page, and lets you filter by time period.
 
 **Flashcard quiz**
 Practice saved words with a built-in flashcard quiz. Mark each word as remembered or forgotten and track your progress. Filter your dictionary by quiz status to focus on words that need more work.
+
+![Flashcard quiz](media/quiz.gif)
 
 **On-device translation**
 Definitions are translated locally using the Chrome Translator API (Chrome) or the Bergamot translation engine (Firefox). Your reading history and vocabulary never leave your device.

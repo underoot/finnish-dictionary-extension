@@ -2,6 +2,7 @@
 
 ## v0.1.0
 
+- Add support dynamic subtitles on Yle Areena and Yle.
 - Add definitions mode for finnish pages.
 - Finnish dictionary with personal word list.
 - Flashcard quiz for saved words.
