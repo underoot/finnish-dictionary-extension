@@ -26,19 +26,11 @@ export default defineManifest({
     scripts: ['src/background.ts'],
     type: 'module',
   } as any,
-  content_scripts: [
-    {
-      matches: ['<all_urls>'],
-      js: ['src/content/main.tsx'],
-      run_at: 'document_idle',
-    },
-  ],
   options_ui: {
     page: 'src/settings/index.html',
     open_in_tab: true,
   },
   permissions: ['storage', 'contextMenus', 'activeTab', 'scripting'],
-  host_permissions: ['<all_urls>'],
   web_accessible_resources: [
     {
       resources: [

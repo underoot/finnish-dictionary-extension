@@ -87,9 +87,14 @@ export default defineConfig({
     target: 'esnext',
     rollupOptions: {
       input: {
+        content: 'src/content/main.tsx',
         dictionary: 'src/dictionary/index.html',
         settings: 'src/settings/index.html',
         licenses: 'src/licenses/index.html',
+      },
+      output: {
+        entryFileNames: (chunk) =>
+          chunk.name === 'content' ? 'assets/content.js' : 'assets/[name]-[hash].js',
       },
     },
   },

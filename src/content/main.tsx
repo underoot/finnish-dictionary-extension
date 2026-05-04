@@ -4,10 +4,7 @@ import App from './App';
 import styles from './style.css?inline';
 
 injectNavigationDetector();
-
-if (isFinnishPage()) {
-  bootstrap();
-}
+bootstrap();
 
 function injectNavigationDetector() {
   const fire = () => document.dispatchEvent(new CustomEvent('fi-dict:navigate'));
@@ -21,11 +18,6 @@ function injectNavigationDetector() {
     origReplace(...args);
     fire();
   };
-}
-
-function isFinnishPage(): boolean {
-  const lang = (document.documentElement.getAttribute('lang') ?? '').toLowerCase();
-  return lang === 'fi' || lang.startsWith('fi-');
 }
 
 function bootstrap() {
