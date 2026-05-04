@@ -1,3 +1,7 @@
+# v0.2.0
+
+- Improve permission model.
+
 # v0.1.1
 
 - Improve words looking reliability.
