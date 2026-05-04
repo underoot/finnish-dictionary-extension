@@ -64,13 +64,31 @@ chrome.action.onClicked.addListener(async (tab) => {
   try {
     await chrome.tabs.sendMessage(tab.id, { type: 'TOGGLE_ACTIVE', active: next });
   } catch {
-    // content script may not be ready (e.g. chrome:// page); ignore.
+    // Content script not present — inject it. It will read the active state from storage.
+    try {
+      const contentUrl = chrome.runtime.getURL('assets/content.js');
+      await chrome.scripting.executeScript({
+        target: { tabId: tab.id },
+        func: async (url: string) => { await import(/* @vite-ignore */ url as any); },
+        args: [contentUrl],
+      });
+    } catch {
+      // Restricted page (chrome://, file://, etc.) — roll back.
+      await setTabActive(tab.id, false);
+      return;
+    }
   }
   chrome.action.setBadgeText({ tabId: tab.id, text: next ? 'ON' : '' });
   chrome.action.setBadgeBackgroundColor({ tabId: tab.id, color: '#c0007a' });
 });
 
 chrome.tabs.onUpdated.addListener(async (tabId, changeInfo) => {
+  if (changeInfo.status === 'loading') {
+    // Full page navigation — content script is gone, reset state.
+    await setTabActive(tabId, false);
+    chrome.action.setBadgeText({ tabId, text: '' });
+    return;
+  }
   if (changeInfo.status !== 'complete') return;
   const active = await getActiveTabs();
   if (active[tabId]) {
